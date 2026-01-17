@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ✅ Bottom navigation fixed hai, isliye page ko extra space chahiye */
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  padding-bottom: 72px; /* bottom nav height space */
 }

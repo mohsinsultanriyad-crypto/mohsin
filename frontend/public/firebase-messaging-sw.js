@@ -7,36 +7,42 @@ firebase.initializeApp({
   projectId: "saudi-job-f499b",
   storageBucket: "saudi-job-f499b.firebasestorage.app",
   messagingSenderId: "316409349988",
-  appId: "1:316409349988:web:e0f28e55e1c3d89880dc71"
+  appId: "1:316409349988:web:e0f28e55e1c3d89880dc71",
 });
 
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage(function(payload) {
-  const title = payload?.notification?.title || "SAUDI JOB";
-  const options = {
-    body: payload?.notification?.body || "",
+messaging.onBackgroundMessage(function (payload) {
+  // ✅ App ko message bhejo -> badge ++
+  self.clients
+    .matchAll({ type: "window", includeUncontrolled: true })
+    .then((clients) => {
+      clients.forEach((client) => client.postMessage({ type: "PUSH_ALERT" }));
+    });
+
+  // ✅ Background notification show
+  const title = payload?.notification?.title || "Saudi Job";
+  const body = payload?.notification?.body || "New update";
+
+  self.registration.showNotification(title, {
+    body,
     icon: "/logo.png",
-    data: {
-      url: payload?.data?.url || "/"
-    }
-  };
-  self.registration.showNotification(title, options);
+    data: payload?.data || {},
+  });
 });
 
+// ✅ Notification click -> site open
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();
-  const url = event.notification?.data?.url || "/";
+
   event.waitUntil(
-    (async () => {
-      const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
-      for (const client of allClients) {
-        if ("focus" in client) {
-          await client.navigate(url);
-          return client.focus();
-        }
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      // If already open, focus
+      for (const client of clientList) {
+        if ("focus" in client) return client.focus();
       }
-      if (clients.openWindow) return clients.openWindow(url);
-    })()
+      // else open new
+      if (self.clients.openWindow) return self.clients.openWindow("/");
+    })
   );
 });
