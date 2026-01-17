@@ -7,6 +7,9 @@ import Alerts from "./pages/Alerts";
 import Dashboard from "./pages/Dashboard";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import newsRoutes from "./routes/news.js";
+app.use("/api/news", newsRoutes);
+
 
 export default function App() {
   return (
