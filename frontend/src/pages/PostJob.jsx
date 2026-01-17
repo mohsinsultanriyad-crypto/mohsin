@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createJob, getMeta } from "../services/api.js";
+import { postJob, getMeta } from "../services/api.js";
 
 export default function PostJob() {
   const [meta, setMeta] = useState({ cities: [], roles: [] });
@@ -34,7 +34,7 @@ export default function PostJob() {
   async function submit() {
     try {
       setLoading(true);
-      await createJob(form);
+      await postJob(form);
       alert("Job posted");
       setForm((f) => ({ ...f, description: "", isUrgent: false }));
     } catch (e) {
