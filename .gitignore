@@ -1,11 +1,52 @@
-# secrets
-backend/.env
-frontend/.env
-backend/serviceAccountKey.json
-backend/src/firebaseAdmin.js
-
-# node
-node_modules
-dist
-build
+# ===============================
+# GENERAL
+# ===============================
+node_modules/
 .env
+.env.*
+*.log
+
+# ===============================
+# Backend Secrets (DO NOT PUSH)
+# ===============================
+backend/.env
+backend/src/firebaseAdmin.js
+backend/serviceAccountKey.json
+
+# ===============================
+# Frontend Secrets
+# ===============================
+frontend/.env
+
+# ===============================
+# Build Folders
+# ===============================
+frontend/dist
+backend/dist
+
+# ===============================
+# IDE / Editor Files
+# ===============================
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===============================
+# OS Files
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Git junk
+# ===============================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===============================
+# Render / Local caches
+# ===============================
+.cache
+.parcel-cache
