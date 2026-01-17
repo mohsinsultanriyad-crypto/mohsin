@@ -1,51 +1,39 @@
 import { useEffect, useState } from "react";
-import JobCard from "../components/JobCard.jsx";
-import DetailsModal from "../components/DetailsModal.jsx";
-import { getJobs, getJobById } from "../services/api.js";
+import JobCard from "../components/JobCard";
+import DetailsModal from "../components/DetailsModal";
+import { getJobs } from "../services/api";
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [open, setOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
 
-  async function load() {
-    const data = await getJobs({ limit: 30, skip: 0 });
-    setJobs(data.items || []);
+  async function loadJobs() {
+    try {
+      const data = await getJobs();
+      setJobs(data);
+    } catch (err) {
+      console.error("Load jobs error:", err);
+    }
   }
 
-  useEffect(() => { load(); }, []);
-
-  // openJob param support (notification click)
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("openJob");
-    if (!id) return;
-
-    (async () => {
-      try {
-        const job = await getJobById(id);
-        setSelected(job);
-        setOpen(true);
-      } catch {}
-    })();
+    loadJobs();
   }, []);
 
-  function openJob(job) {
-    setSelected(job);
-    setOpen(true);
-  }
-
   return (
-    <div className="max-w-md mx-auto px-4 py-5 pb-24">
-      <div className="text-3xl font-extrabold">Jobs</div>
-      <div className="mt-1 text-gray-500 font-semibold">Latest jobs (auto expiry 15 days)</div>
+    <div className="page">
+      <h2>Latest jobs (auto expiry 15 days)</h2>
 
-      <div className="mt-5 space-y-3">
-        {jobs.map((j) => (
-          <JobCard key={j._id} job={j} onOpen={openJob} />
-        ))}
-      </div>
+      {jobs.map((job) => (
+        <JobCard key={job._id} job={job} onClick={() => setSelectedJob(job)} />
+      ))}
 
-      <DetailsModal open={open} job={selected} onClose={() => setOpen(false)} />
+      {selectedJob && (
+        <DetailsModal
+          job={selectedJob}
+          onClose={() => setSelectedJob(null)}
+        />
+      )}
     </div>
   );
 }
