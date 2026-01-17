@@ -1,6 +1,9 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
+
+
+
 // ✅ Replace these placeholders with your Firebase Web config values
 const firebaseConfig = {
   apiKey: "AIzaSyDkJHAAIo51cd4wtZGlhNnonAad9P37KaA",
@@ -10,6 +13,13 @@ const firebaseConfig = {
   messagingSenderId: "316409349988",
   appId: "1:316409349988:web:e0f28e55e1c3d89880dc71",
 };
+
+// when notification received in foreground
+messaging.onMessage((payload) => {
+  const current = Number(localStorage.getItem("alertCount") || 0);
+  localStorage.setItem("alertCount", current + 1);
+});
+
 
 // ✅ Replace with your VAPID public key (Firebase Cloud Messaging > Web push certificates)
 const VAPID_KEY = "BKlCGsReCxG-c00ay_p8eJGvcZqNQ0hnpks0bCOBRSSyHLdHtH16RoK_LCE5QLypfWq14XSBKxOh7pRKwZD1AJw";
