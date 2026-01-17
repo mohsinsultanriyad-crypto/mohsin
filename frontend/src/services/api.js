@@ -1,44 +1,53 @@
-const API_BASE =
-  import.meta.env.VITE_API_BASE?.replace(/\/+$/, "") ||
-  "https://mohsin-wmgw.onrender.com";
+const API_BASE = import.meta.env.VITE_API_URL;
 
-async function request(path, options = {}) {
-  const url = `${API_BASE}${path}`;
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
-
-  // try parse json
-  let data = null;
-  try {
-    data = await res.json();
-  } catch {
-    data = null;
-  }
-
-  if (!res.ok) {
-    const msg = data?.message || `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-
-  return data;
+if (!API_BASE) {
+  alert("VITE_API_URL missing in frontend env");
 }
 
-// Jobs
-export const apiGetJobs = () => request("/api/jobs");
-export const apiGetJobById = (id) => request(`/api/jobs/${id}`);
-export const apiPostJob = (payload) =>
-  request("/api/jobs", { method: "POST", body: JSON.stringify(payload) });
-export const apiViewJob = (id) =>
-  request(`/api/jobs/${id}/view`, { method: "POST" });
-export const apiDeleteJob = (id, email) =>
-  request(`/api/jobs/${id}`, {
+// ---------- JOBS ---------- //
+
+export async function getJobs() {
+  const res = await fetch(`${API_BASE}/api/jobs`);
+  return await res.json();
+}
+
+export async function createJob(data) {
+  const res = await fetch(`${API_BASE}/api/jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return await res.json();
+}
+
+export async function deleteJob(id, email) {
+  const res = await fetch(`${API_BASE}/api/jobs/${id}`, {
     method: "DELETE",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
+  return await res.json();
+}
 
-// News
-export const apiGetNews = () => request("/api/news");
+export async function incrementView(id) {
+  await fetch(`${API_BASE}/api/jobs/${id}/view`, {
+    method: "POST",
+  });
+}
 
-export { API_BASE };
+// ---------- NEWS ---------- //
+
+export async function getNews() {
+  const res = await fetch(`${API_BASE}/api/news`);
+  return await res.json();
+}
+
+// ---------- PUSH ---------- //
+
+export async function saveToken(token, roles, newsEnabled) {
+  await fetch(`${API_BASE}/api/push/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, roles, newsEnabled }),
+  });
+}
