@@ -1,0 +1,11 @@
+# secrets
+backend/.env
+frontend/.env
+backend/serviceAccountKey.json
+backend/src/firebaseAdmin.js
+
+# node
+node_modules
+dist
+build
+.env
