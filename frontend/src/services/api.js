@@ -1,41 +1,31 @@
 const API = import.meta.env.VITE_API_URL;
 
-// ---- JOBS ----
 export async function getJobs() {
-  const res = await fetch(`${API}/api/jobs`);
-  return res.json();
+  const r = await fetch(API + "/api/jobs");
+  return r.json();
 }
 
 export async function postJob(data) {
-  const res = await fetch(`${API}/api/jobs`, {
+  const r = await fetch(API + "/api/jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
-  return res.json();
+  return r.json();
 }
 
-export async function deleteJob(id, email) {
-  const res = await fetch(`${API}/api/jobs/${id}`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email })
+export async function deleteJob(id) {
+  const r = await fetch(API + "/api/jobs/" + id, {
+    method: "DELETE"
   });
-  return res.json();
+  return r.json();
 }
 
-// ---- NEWS ----
-export async function getNews() {
-  const res = await fetch(`${API}/api/news`);
-  return res.json();
-}
-
-// ---- PUSH ----
-export async function saveToken(token, roles, newsEnabled) {
-  const res = await fetch(`${API}/api/push/register`, {
+export async function saveToken(token, roles, news) {
+  const r = await fetch(API + "/api/push/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, roles, newsEnabled })
+    body: JSON.stringify({ token, roles, news })
   });
-  return res.json();
+  return r.json();
 }

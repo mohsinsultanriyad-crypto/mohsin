@@ -4,5 +4,9 @@
 
 /* ✅ Bottom navigation fixed hai, isliye page ko extra space chahiye */
 body {
-  padding-bottom: 65px; /* bottom nav height space */
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  padding-bottom: 70px; /* bottom nav space */
 }
+
