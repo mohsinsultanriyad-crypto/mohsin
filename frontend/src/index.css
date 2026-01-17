@@ -4,5 +4,5 @@
 
 /* ✅ Bottom navigation fixed hai, isliye page ko extra space chahiye */
 body {
-  padding-bottom: 72px; /* bottom nav height space */
+  padding-bottom: 65px; /* bottom nav height space */
 }

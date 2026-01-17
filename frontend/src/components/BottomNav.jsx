@@ -1,39 +1,48 @@
-import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
 
 export default function BottomNav() {
-  const location = useLocation();
-  const [badge, setBadge] = useState(0);
-
-  // Read stored unread alert count
-  useEffect(() => {
-    const count = Number(localStorage.getItem("alertCount") || 0);
-    setBadge(count);
-  }, [location.pathname]);
-
-  const tabs = [
-    { name: "Home", path: "/" },
-    { name: "Post Job", path: "/post" },
-    { name: "Alerts", path: "/alerts" },
-    { name: "Dashboard", path: "/dashboard" },
-  ];
+  const linkClass =
+    "flex-1 text-center py-3 text-sm font-medium text-gray-500";
+  const activeClass =
+    "text-green-600 border-t-2 border-green-600";
 
   return (
-    <div className="bottom-nav">
-      {tabs.map((tab) => (
-        <Link
-          key={tab.path}
-          to={tab.path}
-          className={location.pathname === tab.path ? "active" : ""}
-        >
-          {tab.name}
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md flex z-50">
+      <NavLink
+        to="/"
+        className={({ isActive }) =>
+          isActive ? `${linkClass} ${activeClass}` : linkClass
+        }
+      >
+        Home
+      </NavLink>
 
-          {/* 🔴 Badge only on Alerts */}
-          {tab.name === "Alerts" && badge > 0 && (
-            <span className="badge">{badge}</span>
-          )}
-        </Link>
-      ))}
+      <NavLink
+        to="/post"
+        className={({ isActive }) =>
+          isActive ? `${linkClass} ${activeClass}` : linkClass
+        }
+      >
+        Post Job
+      </NavLink>
+
+      <NavLink
+        to="/alerts"
+        className={({ isActive }) =>
+          isActive ? `${linkClass} ${activeClass}` : linkClass
+        }
+      >
+        Alerts
+      </NavLink>
+
+      <NavLink
+        to="/dashboard"
+        className={({ isActive }) =>
+          isActive ? `${linkClass} ${activeClass}` : linkClass
+        }
+      >
+        Dashboard
+      </NavLink>
     </div>
   );
 }
