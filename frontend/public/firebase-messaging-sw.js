@@ -7,17 +7,36 @@ firebase.initializeApp({
   projectId: "saudi-job-f499b",
   storageBucket: "saudi-job-f499b.firebasestorage.app",
   messagingSenderId: "316409349988",
-  appId:  "1:316409349988:web:e0f28e55e1c3d89880dc71",
+  appId: "1:316409349988:web:e0f28e55e1c3d89880dc71"
 });
 
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function(payload) {
-  self.registration.showNotification(
-    payload.notification.title,
-    {
-      body: payload.notification.body,
-      icon: "/logo.png"
+  const title = payload?.notification?.title || "SAUDI JOB";
+  const options = {
+    body: payload?.notification?.body || "",
+    icon: "/logo.png",
+    data: {
+      url: payload?.data?.url || "/"
     }
+  };
+  self.registration.showNotification(title, options);
+});
+
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+  const url = event.notification?.data?.url || "/";
+  event.waitUntil(
+    (async () => {
+      const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of allClients) {
+        if ("focus" in client) {
+          await client.navigate(url);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    })()
   );
 });

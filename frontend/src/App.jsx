@@ -1,29 +1,30 @@
-import { useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import BottomNav from "./components/BottomNav.jsx";
 import Home from "./pages/Home.jsx";
 import PostJob from "./pages/PostJob.jsx";
 import Alerts from "./pages/Alerts.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
-import Privacy from "./pages/Privacy.jsx";
-import Terms from "./pages/Terms.jsx";
 
 export default function App() {
-  const [page, setPage] = useState("home");
-
-  const go = (p) => setPage(p);
-
   return (
-    <>
-      {page === "home" && <Home go={go} />}
-      {page === "post" && <PostJob go={go} />}
-      {page === "alerts" && <Alerts go={go} />}
-      {page === "dashboard" && <Dashboard go={go} />}
-      {page === "privacy" && <Privacy go={go} />}
-      {page === "terms" && <Terms go={go} />}
+    <BrowserRouter>
+      <div className="min-h-screen bg-white">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/post" element={<PostJob />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
 
-      {["home", "post", "alerts", "dashboard"].includes(page) && (
-        <BottomNav active={page} onChange={setPage} />
-      )}
-    </>
+        <BottomNav />
+
+        <div className="fixed bottom-14 left-0 right-0 bg-white border-t">
+          <div className="max-w-md mx-auto flex justify-between px-4 py-3 text-sm font-extrabold text-gray-500">
+            <a className="underline" href="/privacy" onClick={(e)=>{e.preventDefault(); alert("Add Privacy page later");}}>Privacy Policy</a>
+            <a className="underline" href="/terms" onClick={(e)=>{e.preventDefault(); alert("Add Terms page later");}}>Terms</a>
+          </div>
+        </div>
+      </div>
+    </BrowserRouter>
   );
 }

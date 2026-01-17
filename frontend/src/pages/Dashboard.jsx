@@ -1,218 +1,152 @@
 import { useEffect, useState } from "react";
-import { getJobs, deleteJob, registerPush, getNews } from "../services/api.js";
-import FooterLinks from "../components/FooterLinks.jsx";
+import JobCard from "../components/JobCard.jsx";
+import DetailsModal from "../components/DetailsModal.jsx";
+import EditModal from "../components/EditModal.jsx";
+import { deleteJob, getNews, myPosts, updateJob } from "../services/api.js";
 
-export default function Dashboard({ go }) {
-  const [email, setEmail] = useState(() => localStorage.getItem("sj_dash_email") || "");
-  const [verified, setVerified] = useState(false);
-  const [myJobs, setMyJobs] = useState([]);
-  const [newsEnabled, setNewsEnabled] = useState(() => localStorage.getItem("sj_news_enabled") === "1");
+export default function Dashboard() {
+  const [email, setEmail] = useState(() => localStorage.getItem("sj_owner_email") || "");
+  const [posts, setPosts] = useState([]);
   const [news, setNews] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(false);
 
-  useEffect(() => {
-    // load cached news (placeholder now)
-    (async () => {
+  const [selected, setSelected] = useState(null);
+  const [openDetails, setOpenDetails] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+
+  async function loadMyPosts() {
+    if (!email) return;
+    const data = await myPosts(email);
+    setPosts(data.items || []);
+  }
+
+  async function loadNews() {
+    try {
+      setLoadingNews(true);
       const data = await getNews();
       setNews(data.items || []);
-    })();
-  }, []);
-
-  async function verifyEmail() {
-    const e = String(email || "").trim().toLowerCase();
-    if (!e) return alert("Enter email.");
-    localStorage.setItem("sj_dash_email", e);
-    setEmail(e);
-    setVerified(true);
-    await loadMyJobs(e);
+    } finally {
+      setLoadingNews(false);
+    }
   }
 
-  async function loadMyJobs(e = email) {
-    const data = await getJobs();
-    const clean = String(e || "").trim().toLowerCase();
-    setMyJobs((data.items || []).filter((j) => String(j.email || "").toLowerCase() === clean));
+  useEffect(() => { loadNews(); }, []);
+
+  function openJob(job) {
+    setSelected(job);
+    setOpenDetails(true);
   }
 
-  async function handleDelete(id) {
+  async function doDelete(job) {
+    if (!email) return alert("Enter your email first");
+    if (!confirm("Delete this job?")) return;
     try {
-      await deleteJob(id, email);
-      setMyJobs((prev) => prev.filter((j) => j._id !== id));
-      alert("Deleted.");
+      await deleteJob(job._id, email);
+      await loadMyPosts();
+      alert("Deleted");
     } catch (e) {
-      alert(e?.response?.data?.message || "Delete failed.");
+      alert(e.message || "Delete failed");
     }
   }
 
-  async function toggleNewsAlerts() {
-    const next = !newsEnabled;
-    setNewsEnabled(next);
-    localStorage.setItem("sj_news_enabled", next ? "1" : "0");
-
-    const token = localStorage.getItem("sj_fcm_token");
-    if (!token) {
-      alert("Enable notifications first (Alerts tab).");
-      return;
-    }
-
+  async function doSaveEdit(patch) {
+    if (!email) return alert("Enter your email first");
     try {
-      // keep roles unchanged, only update newsEnabled
-      const roles = JSON.parse(localStorage.getItem("sj_alert_roles") || "[]");
-      await registerPush({ token, roles, newsEnabled: next });
-      alert(next ? "News alerts enabled." : "News alerts disabled.");
-    } catch {
-      alert("Failed to update news alerts.");
+      await updateJob(selected._id, email, patch);
+      setEditOpen(false);
+      await loadMyPosts();
+      alert("Updated");
+    } catch (e) {
+      alert(e.message || "Update failed");
     }
   }
 
   return (
-    <div style={{ maxWidth: 520, margin: "0 auto", padding: 16, paddingBottom: 78 }}>
-      <div style={{ fontSize: 24, fontWeight: 900 }}>Dashboard</div>
+    <div className="max-w-md mx-auto px-4 py-5 pb-24">
+      <div className="text-3xl font-extrabold">Dashboard</div>
 
-      <div style={{ marginTop: 14, border: "1px solid #e5e7eb", borderRadius: 14, padding: 12, background: "#fff" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-          <div>
-            <div style={{ fontWeight: 900 }}>Saudi Labour Updates</div>
-            <div style={{ color: "#6b7280", fontWeight: 700, marginTop: 4 }}>
-              Auto news feed (backend endpoint can be added next)
-            </div>
-          </div>
+      <div className="mt-4 bg-gray-50 border rounded-2xl p-4">
+        <div className="text-xs font-extrabold text-gray-300 tracking-widest">
+          MY POSTS (EMAIL VERIFY)
+        </div>
+
+        <div className="mt-3 flex gap-2">
+          <input
+            className="flex-1 h-11 border rounded-2xl px-4 font-semibold"
+            value={email}
+            onChange={(e)=>setEmail(e.target.value)}
+            placeholder="Enter your email"
+          />
           <button
-            onClick={toggleNewsAlerts}
-            style={{
-              height: 42,
-              padding: "0 12px",
-              borderRadius: 12,
-              border: "1px solid " + (newsEnabled ? "#16a34a" : "#e5e7eb"),
-              background: newsEnabled ? "#16a34a" : "#fff",
-              color: newsEnabled ? "#fff" : "#111827",
-              fontWeight: 900,
-            }}
+            onClick={() => { localStorage.setItem("sj_owner_email", email); loadMyPosts(); }}
+            className="h-11 px-4 rounded-2xl bg-black text-white font-extrabold"
           >
-            {newsEnabled ? "Alerts ON" : "Alerts OFF"}
+            Load
           </button>
         </div>
 
-        <div style={{ marginTop: 10 }}>
-          {news.length === 0 ? (
-            <div style={{ color: "#6b7280", fontWeight: 800 }}>
-              No news loaded yet. (When backend /api/news is added, it will show here.)
-            </div>
-          ) : (
-            news.map((n) => (
-              <div key={n.link} style={{ padding: "10px 0", borderTop: "1px solid #f3f4f6" }}>
-                <div style={{ fontWeight: 900 }}>{n.title}</div>
-                <div style={{ color: "#6b7280", fontWeight: 700, marginTop: 4 }}>
-                  {n.source} • {new Date(n.publishedAt).toLocaleDateString()}
-                </div>
-                <a href={n.link} target="_blank" rel="noreferrer" style={{ fontWeight: 900, color: "#2563eb" }}>
-                  Read more
-                </a>
+        <div className="mt-4 space-y-3">
+          {posts.map((j) => (
+            <div key={j._id} className="space-y-2">
+              <JobCard job={j} onOpen={openJob} />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setSelected(j); setEditOpen(true); }}
+                  className="flex-1 h-11 rounded-2xl bg-gray-900 text-white font-extrabold"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => doDelete(j)}
+                  className="flex-1 h-11 rounded-2xl bg-red-600 text-white font-extrabold"
+                >
+                  Delete
+                </button>
               </div>
-            ))
+            </div>
+          ))}
+
+          {email && posts.length === 0 && (
+            <div className="text-gray-400 font-extrabold mt-2">No posts found.</div>
           )}
         </div>
       </div>
 
-      <div style={{ marginTop: 14, border: "1px solid #e5e7eb", borderRadius: 14, padding: 12, background: "#fff" }}>
-        <div style={{ fontWeight: 900 }}>My Posted Jobs</div>
-        <div style={{ color: "#6b7280", fontWeight: 700, marginTop: 4 }}>
-          Verify email to manage your jobs.
+      <div className="mt-5 bg-gray-50 border rounded-2xl p-4">
+        <div className="text-xs font-extrabold text-gray-300 tracking-widest">
+          LABOUR NEWS
         </div>
 
-        {!verified ? (
-          <div style={{ marginTop: 10 }}>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              style={{
-                width: "100%",
-                height: 44,
-                borderRadius: 12,
-                border: "1px solid #e5e7eb",
-                padding: "0 12px",
-                fontWeight: 800,
-              }}
-            />
-            <button
-              onClick={verifyEmail}
-              style={{
-                width: "100%",
-                height: 46,
-                borderRadius: 12,
-                marginTop: 10,
-                border: "none",
-                background: "#111827",
-                color: "#fff",
-                fontWeight: 900,
-              }}
-            >
-              Verify & Show My Jobs
-            </button>
-          </div>
-        ) : (
-          <div style={{ marginTop: 10 }}>
-            <button
-              onClick={() => loadMyJobs(email)}
-              style={{
-                height: 42,
-                padding: "0 12px",
-                borderRadius: 12,
-                border: "1px solid #e5e7eb",
-                background: "#fff",
-                fontWeight: 900,
-              }}
-            >
-              Refresh
-            </button>
+        {loadingNews && <div className="mt-3 text-gray-500 font-semibold">Loading news...</div>}
+        {!loadingNews && news.length === 0 && <div className="mt-3 text-gray-400 font-semibold">No news.</div>}
 
-            <div style={{ marginTop: 10 }}>
-              {myJobs.length === 0 ? (
-                <div style={{ color: "#6b7280", fontWeight: 800 }}>No jobs found for this email.</div>
-              ) : (
-                myJobs.map((j) => (
-                  <div key={j._id} style={{ borderTop: "1px solid #f3f4f6", padding: "10px 0" }}>
-                    <div style={{ fontWeight: 900 }}>{j.jobRole}</div>
-                    <div style={{ color: "#6b7280", fontWeight: 700, marginTop: 4 }}>
-                      {j.city} • {j.companyName || ""}
-                    </div>
-                    <div style={{ marginTop: 8, display: "flex", gap: 10 }}>
-                      <button
-                        onClick={() => handleDelete(j._id)}
-                        style={{
-                          flex: 1,
-                          height: 42,
-                          borderRadius: 12,
-                          border: "none",
-                          background: "#b91c1c",
-                          color: "#fff",
-                          fontWeight: 900,
-                        }}
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => alert("Edit feature can be added next in backend (PUT /api/jobs/:id).")}
-                        style={{
-                          flex: 1,
-                          height: 42,
-                          borderRadius: 12,
-                          border: "1px solid #e5e7eb",
-                          background: "#fff",
-                          fontWeight: 900,
-                        }}
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+        <div className="mt-3 space-y-3">
+          {news.map((n) => (
+            <a
+              key={n._id}
+              href={n.link}
+              target="_blank"
+              rel="noreferrer"
+              className="block bg-white border rounded-2xl p-4"
+            >
+              <div className="font-extrabold text-gray-800">{n.title}</div>
+              <div className="mt-2 text-sm text-gray-500 font-semibold">
+                {n.summary}
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
 
-      <FooterLinks go={go} />
+      <DetailsModal open={openDetails} job={selected} onClose={() => setOpenDetails(false)} />
+
+      <EditModal
+        open={editOpen}
+        job={selected}
+        onClose={() => setEditOpen(false)}
+        onSave={doSaveEdit}
+      />
     </div>
   );
 }

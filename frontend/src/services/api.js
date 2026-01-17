@@ -1,39 +1,81 @@
-import axios from "axios";
+const BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE,
-});
+export async function getMeta() {
+  const r = await fetch(`${BASE}/api/meta`);
+  return r.json();
+}
 
-export async function getJobs() {
-  return (await api.get("/api/jobs")).data;
+export async function getJobs({ limit = 20, skip = 0 } = {}) {
+  const r = await fetch(`${BASE}/api/jobs?limit=${limit}&skip=${skip}`);
+  return r.json();
+}
+
+export async function getJobById(id) {
+  const r = await fetch(`${BASE}/api/jobs/${id}`);
+  if (!r.ok) throw new Error("job not found");
+  return r.json();
 }
 
 export async function createJob(payload) {
-  return (await api.post("/api/jobs", payload)).data;
+  const body = {
+    ...payload,
+    email: String(payload.email || "").trim().toLowerCase(),
+    jobRole: String(payload.jobRole || "").trim().toLowerCase()
+  };
+  const r = await fetch(`${BASE}/api/jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data?.message || "Create failed");
+  return data;
+}
+
+export async function viewJob(id) {
+  await fetch(`${BASE}/api/jobs/${id}/view`, { method: "POST" });
+}
+
+export async function myPosts(email) {
+  const e = String(email || "").trim().toLowerCase();
+  const r = await fetch(`${BASE}/api/my-posts?email=${encodeURIComponent(e)}`);
+  return r.json();
+}
+
+export async function updateJob(id, email, patch) {
+  const e = String(email || "").trim().toLowerCase();
+  const body = {
+    ...patch,
+    jobRole: patch.jobRole ? String(patch.jobRole).trim().toLowerCase() : undefined
+  };
+  const r = await fetch(`${BASE}/api/jobs/${id}?email=${encodeURIComponent(e)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data?.message || "Update failed");
+  return data;
 }
 
 export async function deleteJob(id, email) {
-  const cleanEmail = String(email || "").trim().toLowerCase();
-  return (await api.delete(`/api/jobs/${id}`, { params: { email: cleanEmail } })).data;
+  const e = String(email || "").trim().toLowerCase();
+  const r = await fetch(`${BASE}/api/jobs/${id}?email=${encodeURIComponent(e)}`, { method: "DELETE" });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data?.message || "Delete failed");
+  return data;
 }
 
-// Push register (token + roles + news toggle)
-export async function registerPush({ token, roles = [], newsEnabled = false }) {
-  return (
-    await api.post("/api/push/register", {
-      token,
-      roles,
-      newsEnabled,
-      platform: "web",
-    })
-  ).data;
-}
-
-// Backend doesn't have /api/news yet in your backend code.
-// So Dashboard shows placeholder list until you add backend news endpoint.
-// (You asked frontend now; news backend can be added next)
 export async function getNews() {
-  // If you later add /api/news, just replace this call:
-  // return (await api.get("/api/news?limit=10")).data;
-  return { items: [] };
+  const r = await fetch(`${BASE}/api/news`);
+  return r.json();
+}
+
+export async function registerPushToken({ token, roles, newsEnabled }) {
+  const r = await fetch(`${BASE}/api/push/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, roles, newsEnabled, platform: "web" })
+  });
+  return r.json();
 }
