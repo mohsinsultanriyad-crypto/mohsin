@@ -1,81 +1,44 @@
-const BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+const API_BASE =
+  import.meta.env.VITE_API_BASE?.replace(/\/+$/, "") ||
+  "https://mohsin-wmgw.onrender.com";
 
-export async function getMeta() {
-  const r = await fetch(`${BASE}/api/meta`);
-  return r.json();
-}
-
-export async function getJobs({ limit = 20, skip = 0 } = {}) {
-  const r = await fetch(`${BASE}/api/jobs?limit=${limit}&skip=${skip}`);
-  return r.json();
-}
-
-export async function getJobById(id) {
-  const r = await fetch(`${BASE}/api/jobs/${id}`);
-  if (!r.ok) throw new Error("job not found");
-  return r.json();
-}
-
-export async function createJob(payload) {
-  const body = {
-    ...payload,
-    email: String(payload.email || "").trim().toLowerCase(),
-    jobRole: String(payload.jobRole || "").trim().toLowerCase()
-  };
-  const r = await fetch(`${BASE}/api/jobs`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+async function request(path, options = {}) {
+  const url = `${API_BASE}${path}`;
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
   });
-  const data = await r.json();
-  if (!r.ok) throw new Error(data?.message || "Create failed");
+
+  // try parse json
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+
+  if (!res.ok) {
+    const msg = data?.message || `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+
   return data;
 }
 
-export async function viewJob(id) {
-  await fetch(`${BASE}/api/jobs/${id}/view`, { method: "POST" });
-}
-
-export async function myPosts(email) {
-  const e = String(email || "").trim().toLowerCase();
-  const r = await fetch(`${BASE}/api/my-posts?email=${encodeURIComponent(e)}`);
-  return r.json();
-}
-
-export async function updateJob(id, email, patch) {
-  const e = String(email || "").trim().toLowerCase();
-  const body = {
-    ...patch,
-    jobRole: patch.jobRole ? String(patch.jobRole).trim().toLowerCase() : undefined
-  };
-  const r = await fetch(`${BASE}/api/jobs/${id}?email=${encodeURIComponent(e)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+// Jobs
+export const apiGetJobs = () => request("/api/jobs");
+export const apiGetJobById = (id) => request(`/api/jobs/${id}`);
+export const apiPostJob = (payload) =>
+  request("/api/jobs", { method: "POST", body: JSON.stringify(payload) });
+export const apiViewJob = (id) =>
+  request(`/api/jobs/${id}/view`, { method: "POST" });
+export const apiDeleteJob = (id, email) =>
+  request(`/api/jobs/${id}`, {
+    method: "DELETE",
+    body: JSON.stringify({ email }),
   });
-  const data = await r.json();
-  if (!r.ok) throw new Error(data?.message || "Update failed");
-  return data;
-}
 
-export async function deleteJob(id, email) {
-  const e = String(email || "").trim().toLowerCase();
-  const r = await fetch(`${BASE}/api/jobs/${id}?email=${encodeURIComponent(e)}`, { method: "DELETE" });
-  const data = await r.json();
-  if (!r.ok) throw new Error(data?.message || "Delete failed");
-  return data;
-}
+// News
+export const apiGetNews = () => request("/api/news");
 
-export async function getNews() {
-  const r = await fetch(`${BASE}/api/news`);
-  return r.json();
-}
-
-export async function registerPushToken({ token, roles, newsEnabled }) {
-  const r = await fetch(`${BASE}/api/push/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, roles, newsEnabled, platform: "web" })
-  });
-  return r.json();
-}
+export { API_BASE };

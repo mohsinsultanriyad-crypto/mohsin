@@ -1,165 +1,173 @@
 import { useEffect, useMemo, useState } from "react";
-import JobCard from "../components/JobCard.jsx";
-import DetailsModal from "../components/DetailsModal.jsx";
-import useJobAlerts from "../hooks/useJobAlerts.js";
-import { enableNotifications, listenForegroundNotifications } from "../firebase/firebaseClient.js";
-import { registerPushToken, getMeta } from "../services/api.js";
+import { apiGetJobById } from "../services/api";
+
+const LS_KEY = "SAUDI_JOB_ALERTS"; // array of {type:'job', jobId, title, body, ts}
+
+function readAlerts() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    const arr = JSON.parse(raw || "[]");
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAlerts(arr) {
+  localStorage.setItem(LS_KEY, JSON.stringify(arr));
+}
 
 export default function Alerts() {
-  const [rolesAll, setRolesAll] = useState([]);
-  const [selectedRoles, setSelectedRoles] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("sj_alert_roles") || "[]"); }
-    catch { return []; }
-  });
+  const [alerts, setAlerts] = useState(() => readAlerts());
+  const [jobsMap, setJobsMap] = useState({}); // {jobId: jobData}
+  const [loading, setLoading] = useState(false);
 
-  const [newsEnabled, setNewsEnabled] = useState(() => localStorage.getItem("sj_news_enabled") === "1");
-  const [alertList, setAlertList] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("sj_alert_list") || "[]"); }
-    catch { return []; }
-  });
-
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-
-  const alerts = useMemo(() => alertList || [], [alertList]);
-
+  // when user opens alerts -> reset badge
   useEffect(() => {
-    localStorage.setItem("sj_alert_roles", JSON.stringify(selectedRoles));
-  }, [selectedRoles]);
-
-  useEffect(() => {
-    localStorage.setItem("sj_alert_list", JSON.stringify(alertList));
-  }, [alertList]);
-
-  useEffect(() => {
-    localStorage.setItem("sj_news_enabled", newsEnabled ? "1" : "0");
-  }, [newsEnabled]);
-
-  useEffect(() => {
-    (async () => {
-      const m = await getMeta();
-      setRolesAll(m.roles || []);
-    })();
+    localStorage.setItem("ALERT_BADGE", "0");
   }, []);
 
-  // Poll for matching jobs and add to in-app alert list
-  useJobAlerts({ enabled: true, roles: selectedRoles, setAlertList });
+  // auto refresh alerts from localStorage
+  useEffect(() => {
+    const onMsg = (e) => {
+      if (e?.data?.type === "PUSH_ALERT") {
+        setAlerts(readAlerts());
+      }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
 
-  function toggleRole(role) {
-    setSelectedRoles((cur) => cur.includes(role) ? cur.filter(x => x !== role) : [...cur, role]);
-  }
+  // verify job exists for each job alert
+  useEffect(() => {
+    let alive = true;
 
-  function clearAlerts() {
-    if (!confirm("Clear all alerts?")) return;
-    setAlertList([]);
-  }
+    (async () => {
+      const list = readAlerts();
+      setAlerts(list);
 
-  function markSeen(jobId) {
-    setAlertList((prev) => (prev || []).map(a => a.jobId === jobId ? { ...a, seen: true } : a));
-  }
+      const jobAlerts = list.filter((a) => a?.type === "job" && a?.jobId);
+      if (jobAlerts.length === 0) {
+        setJobsMap({});
+        return;
+      }
 
-  function openJob(job) {
-    if (job?._id) markSeen(job._id);
-    setSelectedJob(job);
-    setDetailsOpen(true);
-  }
+      setLoading(true);
 
-  async function enablePush() {
-    try {
-      const vapid = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-      if (!vapid) return alert("VITE_FIREBASE_VAPID_KEY missing in frontend env");
+      const nextMap = {};
+      const keepAlerts = [];
 
-      const token = await enableNotifications(vapid);
-      listenForegroundNotifications();
+      for (const a of list) {
+        if (a?.type !== "job" || !a?.jobId) {
+          keepAlerts.push(a);
+          continue;
+        }
 
-      const resp = await registerPushToken({
-        token,
-        roles: selectedRoles,
-        newsEnabled
-      });
+        try {
+          const job = await apiGetJobById(a.jobId);
+          nextMap[a.jobId] = job;
+          keepAlerts.push(a); // keep only if job exists
+        } catch {
+          // job deleted or not found => remove from alerts
+        }
+      }
 
-      if (!resp?.ok) return alert("Token register failed");
-      alert("Notifications enabled");
-    } catch (e) {
-      alert(e?.message || "Enable failed");
-    }
-  }
+      if (!alive) return;
 
-  const unseenCount = alerts.filter(a => !a.seen).length;
+      // save cleaned alerts (removed deleted jobs)
+      writeAlerts(keepAlerts);
+      setAlerts(keepAlerts);
+      setJobsMap(nextMap);
+      setLoading(false);
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const visibleAlerts = useMemo(() => {
+    return alerts
+      .slice()
+      .sort((a, b) => (b?.ts || 0) - (a?.ts || 0));
+  }, [alerts]);
 
   return (
-    <div className="max-w-md mx-auto px-4 py-5 pb-24">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-3xl font-extrabold">Alerts</div>
-          <div className="text-gray-500 font-semibold mt-1">
-            Unseen: {unseenCount}
-          </div>
-        </div>
+    <div style={{ padding: 16 }}>
+      <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12 }}>
+        Alerts
+      </h2>
 
-        <button
-          onClick={clearAlerts}
-          className="h-11 px-4 rounded-2xl bg-gray-50 border font-extrabold text-gray-700"
-        >
-          Clear
-        </button>
+      {loading && <div>Checking alerts…</div>}
+
+      {visibleAlerts.length === 0 && !loading && (
+        <div>No alerts yet.</div>
+      )}
+
+      <div style={{ display: "grid", gap: 12 }}>
+        {visibleAlerts.map((a, idx) => {
+          const job = a.type === "job" ? jobsMap[a.jobId] : null;
+
+          return (
+            <div
+              key={`${a.jobId || a.link || "a"}-${idx}`}
+              style={{
+                border: "1px solid #eee",
+                borderRadius: 14,
+                padding: 12,
+                background: "#fff",
+              }}
+            >
+              <div style={{ fontWeight: 800 }}>
+                {a.title || (job ? job.jobRole : "Alert")}
+              </div>
+
+              {a.body && (
+                <div style={{ opacity: 0.8, marginTop: 6 }}>{a.body}</div>
+              )}
+
+              {job && (
+                <div style={{ marginTop: 10, fontSize: 13, opacity: 0.85 }}>
+                  <div>
+                    <b>Role:</b> {job.jobRole}
+                  </div>
+                  <div>
+                    <b>City:</b> {job.city}
+                  </div>
+                  <div>
+                    <b>Views:</b> {job.views || 0}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      // open job details on home (simple way)
+                      // you can also navigate if router is used
+                      window.location.href = "/?openJob=" + job._id;
+                    }}
+                    style={{
+                      marginTop: 10,
+                      padding: "10px 12px",
+                      borderRadius: 12,
+                      border: "1px solid #ddd",
+                      cursor: "pointer",
+                      width: "100%",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Open Job
+                  </button>
+                </div>
+              )}
+
+              {!job && a.type === "job" && (
+                <div style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
+                  (Job removed / expired)
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-
-      <div className="mt-5 bg-gray-50 border rounded-2xl p-4">
-        <div className="text-xs font-extrabold text-gray-300 tracking-widest">
-          NOTIFICATIONS
-        </div>
-
-        <div className="mt-3 flex gap-2">
-          <button
-            onClick={enablePush}
-            className="flex-1 h-11 rounded-2xl bg-black text-white font-extrabold"
-          >
-            Enable
-          </button>
-
-          <label className="flex items-center gap-2 px-3 h-11 rounded-2xl bg-white border font-extrabold text-gray-700">
-            <input type="checkbox" checked={newsEnabled} onChange={(e)=>setNewsEnabled(e.target.checked)} />
-            News
-          </label>
-        </div>
-
-        <div className="mt-4 text-xs font-extrabold text-gray-300 tracking-widest">
-          ROLES (MULTI SELECT)
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {rolesAll.map((r) => {
-            const active = selectedRoles.includes(r);
-            return (
-              <button
-                key={r}
-                onClick={() => toggleRole(r)}
-                className={[
-                  "px-3 py-2 rounded-full border text-sm font-extrabold",
-                  active ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-600"
-                ].join(" ")}
-              >
-                {r}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="mt-5 space-y-3">
-        {alerts.length === 0 && (
-          <div className="text-gray-400 font-extrabold">
-            No alerts yet.
-          </div>
-        )}
-
-        {alerts.map((a) => (
-          <JobCard key={a.id} job={a.jobSnapshot} onOpen={openJob} />
-        ))}
-      </div>
-
-      <DetailsModal open={detailsOpen} job={selectedJob} onClose={() => setDetailsOpen(false)} />
     </div>
   );
 }
