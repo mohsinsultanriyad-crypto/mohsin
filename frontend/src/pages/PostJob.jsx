@@ -1,97 +1,66 @@
-import { useEffect, useState } from "react";
-import { postJob, getMeta } from "../services/api.js";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { api } from "../services/api";
+import { cities } from "../utils/cities";
+import { roles } from "../utils/roles";
 
 export default function PostJob() {
-  const [meta, setMeta] = useState({ cities: [], roles: [] });
-
-  const [form, setForm] = useState({
-    name: "",
-    companyName: "",
-    phone: "",
-    email: "",
-    city: "Riyadh",
-    jobRole: "helper",
-    description: "",
-    isUrgent: false
-  });
-
+  const nav = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const m = await getMeta();
-        setMeta(m);
-        setForm((f) => ({
-          ...f,
-          city: m.cities?.[0] || "Riyadh",
-          jobRole: m.roles?.[0] || "helper"
-        }));
-      } catch {}
-    })();
-  }, []);
+  const [name, setName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [city, setCity] = useState("Riyadh");
+  const [jobRole, setJobRole] = useState("Helper");
+  const [description, setDescription] = useState("");
+  const [urgent, setUrgent] = useState(false);
 
-  async function submit() {
+  async function publish() {
     try {
       setLoading(true);
-      await postJob(form);
-      alert("Job posted");
-      setForm((f) => ({ ...f, description: "", isUrgent: false }));
+      await api.postJob({ name, companyName, phone, email, city, jobRole, description, urgent });
+      alert("Job posted successfully");
+      nav("/");
     } catch (e) {
-      alert(e.message || "Failed");
+      alert("Post failed. Check fields.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-5 pb-24">
-      <div className="text-3xl font-extrabold">Post Job</div>
+    <div className="mx-auto max-w-md p-4">
+      <div className="mb-3 text-xl font-bold text-blue-700">Post Job</div>
 
-      <div className="mt-5 space-y-3">
-        <input className="w-full h-12 border rounded-2xl px-4 font-semibold"
-          value={form.name} onChange={(e)=>setForm({...form, name:e.target.value})}
-          placeholder="Your Name"
-        />
-        <input className="w-full h-12 border rounded-2xl px-4 font-semibold"
-          value={form.companyName} onChange={(e)=>setForm({...form, companyName:e.target.value})}
-          placeholder="Company Name (optional)"
-        />
-        <input className="w-full h-12 border rounded-2xl px-4 font-semibold"
-          value={form.phone} onChange={(e)=>setForm({...form, phone:e.target.value})}
-          placeholder="Phone"
-        />
-        <input className="w-full h-12 border rounded-2xl px-4 font-semibold"
-          value={form.email} onChange={(e)=>setForm({...form, email:e.target.value})}
-          placeholder="Email (for edit/delete verification)"
-        />
+      <div className="space-y-3">
+        <input className="w-full rounded-2xl border p-3 text-sm" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <input className="w-full rounded-2xl border p-3 text-sm" placeholder="Company Name (optional)" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+        <input className="w-full rounded-2xl border p-3 text-sm" placeholder="Phone (WhatsApp)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <input className="w-full rounded-2xl border p-3 text-sm" placeholder="Email (for My Posts)" value={email} onChange={(e) => setEmail(e.target.value)} />
 
-        <select className="w-full h-12 border rounded-2xl px-4 font-semibold"
-          value={form.city} onChange={(e)=>setForm({...form, city:e.target.value})}>
-          {meta.cities.map(c => <option key={c} value={c}>{c}</option>)}
+        <select className="w-full rounded-2xl border p-3 text-sm" value={city} onChange={(e) => setCity(e.target.value)}>
+          {cities.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
 
-        <select className="w-full h-12 border rounded-2xl px-4 font-semibold"
-          value={form.jobRole} onChange={(e)=>setForm({...form, jobRole:e.target.value})}>
-          {meta.roles.map(r => <option key={r} value={r}>{r}</option>)}
+        <select className="w-full rounded-2xl border p-3 text-sm" value={jobRole} onChange={(e) => setJobRole(e.target.value)}>
+          {roles.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
 
-        <textarea className="w-full border rounded-2xl px-4 py-3 font-semibold" rows={5}
-          value={form.description} onChange={(e)=>setForm({...form, description:e.target.value})}
-          placeholder="Job Description"
-        />
+        <textarea className="w-full rounded-2xl border p-3 text-sm" rows={5} placeholder="Job Description" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-        <label className="flex items-center gap-3 font-extrabold text-gray-700">
-          <input type="checkbox" checked={form.isUrgent} onChange={(e)=>setForm({...form, isUrgent:e.target.checked})} />
-          Urgent hiring (24h highlight)
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} />
+          Urgent Hiring (24h highlight)
         </label>
 
         <button
+          onClick={publish}
           disabled={loading}
-          onClick={submit}
-          className="w-full h-12 rounded-2xl bg-black text-white font-extrabold disabled:opacity-60"
+          className="w-full rounded-2xl bg-blue-600 py-3 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {loading ? "Posting..." : "Publish Job"}
+          {loading ? "Publishing..." : "Publish Job"}
         </button>
       </div>
     </div>

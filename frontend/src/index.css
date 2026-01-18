@@ -2,11 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ✅ Bottom navigation fixed hai, isliye page ko extra space chahiye */
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
-  padding-bottom: 70px; /* bottom nav space */
+html, body, #root {
+  height: 100%;
 }
-

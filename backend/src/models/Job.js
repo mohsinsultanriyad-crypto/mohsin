@@ -2,22 +2,26 @@ import mongoose from "mongoose";
 
 const JobSchema = new mongoose.Schema(
   {
-    name: String,
-    companyName: String,
-    phone: String,
-    email: String,
-    city: String,
-    jobRole: String,
-    description: String,
-    views: { type: Number, default: 0 },
+    name: { type: String, required: true, trim: true },
+    companyName: { type: String, default: "", trim: true },
+    phone: { type: String, required: true, trim: true },
+    email: { type: String, required: true, trim: true, lowercase: true },
+    city: { type: String, required: true, trim: true },
+    jobRole: { type: String, required: true, trim: true },
+    description: { type: String, required: true, trim: true },
+
     urgent: { type: Boolean, default: false },
-    urgentUntil: { type: Date, default: null },
     createdAt: { type: Date, default: Date.now },
+    urgentUntil: { type: Date, default: null },
+    expiresAt: { type: Date, required: true },
+
+    views: { type: Number, default: 0 },
+    deleted: { type: Boolean, default: false }
   },
-  { timestamps: true }
+  { versionKey: false }
 );
 
-// Auto delete after 15 days
-JobSchema.index({ createdAt: 1 }, { expireAfterSeconds: 15 * 24 * 60 * 60 });
+JobSchema.index({ expiresAt: 1 });
+JobSchema.index({ jobRole: 1, city: 1 });
 
-export default mongoose.models.Job || mongoose.model("Job", JobSchema);
+export default mongoose.model("Job", JobSchema);
