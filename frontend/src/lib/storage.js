@@ -4,9 +4,10 @@ const K = {
   newsEnabled: "sj_news_enabled",
   token: "sj_fcm_token",
   myEmail: "sj_my_email",
-  savedJobs: "sj_saved_jobs",
+  savedJobs: "sj_saved_jobs"
 };
 
+// ===== Badge =====
 export function getBadge() {
   const n = Number(localStorage.getItem(K.badge) || "0");
   return Number.isFinite(n) ? n : 0;
@@ -21,6 +22,7 @@ export function resetBadge() {
   localStorage.setItem(K.badge, "0");
 }
 
+// ===== Roles =====
 export function getRoles() {
   try {
     const raw = localStorage.getItem(K.roles);
@@ -35,6 +37,7 @@ export function setRoles(roles) {
   localStorage.setItem(K.roles, JSON.stringify(roles || []));
 }
 
+// ===== News Toggle =====
 export function getNewsEnabled() {
   return localStorage.getItem(K.newsEnabled) !== "0";
 }
@@ -43,6 +46,7 @@ export function setNewsEnabled(v) {
   localStorage.setItem(K.newsEnabled, v ? "1" : "0");
 }
 
+// ===== FCM Token =====
 export function getSavedToken() {
   return localStorage.getItem(K.token) || "";
 }
@@ -51,6 +55,7 @@ export function setSavedToken(t) {
   localStorage.setItem(K.token, t || "");
 }
 
+// ===== My Email =====
 export function getMyEmail() {
   return localStorage.getItem(K.myEmail) || "";
 }
@@ -58,16 +63,8 @@ export function getMyEmail() {
 export function setMyEmail(email) {
   localStorage.setItem(K.myEmail, email || "");
 }
-export function getSavedJobs() {
-  try {
-    const raw = localStorage.getItem(K.savedJobs);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
 
+// ===== Saved Jobs =====
 export function getSavedJobs() {
   try {
     const raw = localStorage.getItem(K.savedJobs);
@@ -85,7 +82,10 @@ export function isJobSaved(id) {
 export function toggleSavedJob(id) {
   const key = String(id);
   const list = getSavedJobs();
-  const next = list.includes(key) ? list.filter((x) => x !== key) : [key, ...list];
+  const next = list.includes(key)
+    ? list.filter((x) => x !== key)
+    : [key, ...list];
+
   localStorage.setItem(K.savedJobs, JSON.stringify(next));
   return next;
 }
