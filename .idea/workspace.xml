@@ -11,8 +11,7 @@
       <change beforePath="$PROJECT_DIR$/backend/src/models/Job.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/models/Job.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/models/News.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/models/News.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/models/Token.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/models/Token.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/lib/storage.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/lib/storage.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Updates.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Updates.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/services/fcm.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/services/fcm.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
