@@ -4,6 +4,7 @@ const K = {
   newsEnabled: "sj_news_enabled",
   token: "sj_fcm_token",
   myEmail: "sj_my_email"
+  savedJobs: "sj_saved_jobs",
 };
 
 export function getBadge() {
@@ -56,4 +57,25 @@ export function getMyEmail() {
 
 export function setMyEmail(email) {
   localStorage.setItem(K.myEmail, email || "");
+}
+export function getSavedJobs() {
+  try {
+    const raw = localStorage.getItem(K.savedJobs);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+export function isJobSaved(id) {
+  return getSavedJobs().includes(String(id));
+}
+
+export function toggleSaveJob(id) {
+  const jobId = String(id);
+  const list = getSavedJobs();
+  const next = list.includes(jobId) ? list.filter(x => x !== jobId) : [jobId, ...list];
+  localStorage.setItem(K.savedJobs, JSON.stringify(next.slice(0, 200)));
+  return next;
 }
