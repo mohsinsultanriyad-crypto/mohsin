@@ -4,49 +4,51 @@ importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-messaging-com
 
 firebase.initializeApp({
   apiKey: "AIzaSyDkJHAAIo51cd4wtZGlhNnonAad9P37KaA",
-    authDomain: "saudi-job-f499b.firebaseapp.com",
-    projectId: "saudi-job-f499b",
-    storageBucket: "saudi-job-f499b.firebasestorage.app",
-    messagingSenderId: "316409349988",
-    appId: "1:316409349988:web:e0f28e55e1c3d89880dc71",
+  authDomain: "saudi-job-f499b.firebaseapp.com",
+  projectId: "saudi-job-f499b",
+  storageBucket: "saudi-job-f499b.appspot.com",
+  messagingSenderId: "316409349988",
+  appId: "1:316409349988:web:e0f28e55e1c3d89880dc71"
 });
 
 const messaging = firebase.messaging();
+messaging.onBackgroundMessage(() => {});
 
-// Handles background notifications display (Firebase will show it)
-messaging.onBackgroundMessage(function () {
-  // no-op
-});
-
-// Open correct tab on notification click
-self.addEventListener("notificationclick", function (event) {
+// ✅ Always open app when notification clicked
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const data = event.notification?.data || {};
-  const targetTab = data.targetTab || data?.FCM_MSG?.data?.targetTab || "";
-  const link = data.link || data?.FCM_MSG?.data?.link || "";
-  const jobId = data.jobId || data?.FCM_MSG?.data?.jobId || "";
+  // Firebase sometimes wraps data inside FCM_MSG
+  const raw = event.notification?.data || {};
+  const data = raw?.FCM_MSG?.data || raw || {};
 
-  let url = "/";
-  if (targetTab === "alerts") url = "/alerts";
-  if (targetTab === "updates") url = "/updates";
+  const targetTab = data.targetTab || "";
+  const jobId = data.jobId || "";
+  const link = data.link || "";
+
+  let path = "/";
+  if (targetTab === "alerts") path = "/alerts";
+  if (targetTab === "updates") path = "/updates";
 
   const params = new URLSearchParams();
-  if (link) params.set("link", link);
   if (jobId) params.set("jobId", jobId);
+  if (link) params.set("link", link);
 
-  const finalUrl = params.toString() ? `${url}?${params.toString()}` : url;
+  const finalUrl = params.toString()
+    ? `${path}?${params.toString()}`
+    : path;
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      // Focus if already open
       for (const client of clientList) {
         if ("focus" in client) {
           client.navigate(finalUrl);
           return client.focus();
         }
       }
-      if (clients.openWindow) return clients.openWindow(finalUrl);
-      return null;
+      // Otherwise open new
+      return clients.openWindow(finalUrl);
     })
   );
 });
