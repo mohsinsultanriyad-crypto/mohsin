@@ -5,7 +5,7 @@ import JobCard from "../components/JobCard.jsx";
 import ModalSheet from "../components/ModalSheet.jsx";
 import { fetchJobs, viewJob } from "../services/jobsApi.js";
 
-import { getSavedJobs, isJobSaved, toggleSavedJob } from "../lib/storage.js";
+import { getSavedJobs, toggleSavedJob } from "../lib/storage.js";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(null);
 
-  // ✅ keep saved ids in state so UI updates instantly (no refresh)
+  // Keep saved ids in state so UI updates instantly (no refresh)
   const [savedIds, setSavedIds] = useState(() => getSavedJobs());
 
   const activeSaved = useMemo(() => {
@@ -66,8 +66,7 @@ export default function Home() {
       `SAUDI JOB\n` +
       `${active.jobRole} • ${active.city}\n\n` +
       `${active.description || ""}\n\n` +
-      (wa ? `Apply WhatsApp: ${wa}\n` : "") +
-      `\n`;
+      (wa ? `Apply WhatsApp: ${wa}\n` : "");
 
     try {
       if (navigator.share) {
@@ -84,7 +83,7 @@ export default function Home() {
     // fallback: copy
     try {
       await navigator.clipboard.writeText(text);
-      alert("Copied to clipboard ✅");
+      alert("Copied to clipboard");
     } catch {
       alert(text);
     }
@@ -125,29 +124,31 @@ export default function Home() {
               <div className="mt-1 text-sm text-gray-600">{active.phone}</div>
             </div>
 
-            {/* ✅ Save + Share row */}
+            {/* Save + Share row (Blue theme) */}
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={handleToggleSave}
                 className={[
-                  "w-full rounded-2xl px-4 py-3 text-center text-sm font-semibold ring-1 ring-black/5",
-                  activeSaved ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-800"
+                  "w-full rounded-2xl px-4 py-3 text-center text-sm font-semibold ring-1",
+                  activeSaved
+                    ? "bg-blue-50 text-blue-700 ring-blue-100"
+                    : "bg-gray-50 text-gray-800 ring-black/5"
                 ].join(" ")}
               >
-                {activeSaved ? "Saved ✓" : "Save"}
+                {activeSaved ? "Saved" : "Save"}
               </button>
 
               <button
                 type="button"
                 onClick={handleShare}
-                className="w-full rounded-2xl bg-gray-900 px-4 py-3 text-center text-sm font-semibold text-white"
+                className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white"
               >
                 Share
               </button>
             </div>
 
-            {/* ✅ WhatsApp */}
+            {/* WhatsApp (keep green) */}
             <a
               className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white"
               href={`https://wa.me/${String(active.phone).replace(/\D/g, "")}?text=${encodeURIComponent(
