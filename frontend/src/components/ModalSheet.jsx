@@ -12,8 +12,9 @@ export default function ModalSheet({ open, onClose, title, children }) {
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
+
           <motion.div
-            className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md"
+            className="fixed left-0 right-0 z-50 mx-auto max-w-md bottom-20"
             initial={{ y: 400 }}
             animate={{ y: 0 }}
             exit={{ y: 400 }}
@@ -25,11 +26,16 @@ export default function ModalSheet({ open, onClose, title, children }) {
                 <button
                   className="rounded-xl px-3 py-1 text-sm font-semibold text-gray-600 hover:bg-gray-100"
                   onClick={onClose}
+                  type="button"
                 >
                   Close
                 </button>
               </div>
-              <div className="max-h-[70vh] overflow-auto px-4 pb-4">{children}</div>
+
+              {/* ✅ extra bottom padding so button never hides behind bottom nav */}
+              <div className="max-h-[70vh] overflow-auto px-4 pb-24">
+                {children}
+              </div>
             </div>
           </motion.div>
         </>
