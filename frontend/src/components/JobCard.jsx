@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { isJobSaved, toggleSavedJob } from "../lib/storage.js";
 
 function formatDate(d) {
@@ -25,15 +26,21 @@ function isNew(createdAt, hours = 24) {
 export default function JobCard({ job, onOpen, onSavedChange }) {
   const urgentActive = !!job.urgentActive;
 
-  const createdAt = job.createdAt || job.created_at || job.created; // ✅ fallback
+  const createdAt = job.createdAt || job.created_at || job.created;
   const showNew = createdAt ? isNew(createdAt, 24) : false;
   const dateText = createdAt ? formatDate(createdAt) : "";
 
-  const saved = isJobSaved(job._id);
+  // ✅ local reactive state (fix)
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSaved(isJobSaved(job._id));
+  }, [job._id]);
 
   function handleSave(e) {
     e.stopPropagation();
     toggleSavedJob(job._id);
+    setSaved(isJobSaved(job._id)); // ✅ instant UI update
     onSavedChange?.();
   }
 
@@ -49,17 +56,12 @@ export default function JobCard({ job, onOpen, onSavedChange }) {
 
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: `Job: ${job.jobRole}`,
-          text
-        });
+        await navigator.share({ title: `Job: ${job.jobRole}`, text });
       } else {
         await navigator.clipboard.writeText(text);
         alert("Copied! Paste in WhatsApp.");
       }
-    } catch {
-      // user cancelled
-    }
+    } catch {}
   }
 
   return (
@@ -78,27 +80,22 @@ export default function JobCard({ job, onOpen, onSavedChange }) {
           <div>
             <div className="text-sm font-semibold text-gray-900">{job.jobRole}</div>
             <div className="mt-1 text-sm text-gray-600">{job.city}</div>
-
-            {/* ✅ Date line */}
             {dateText ? <div className="mt-1 text-xs text-gray-500">{dateText}</div> : null}
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {/* ✅ NEW badge (24h) */}
             {showNew ? (
               <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
                 New
               </span>
             ) : null}
 
-            {/* ✅ Urgent badge */}
             {urgentActive ? (
               <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 ring-1 ring-red-100">
                 Urgent
               </span>
             ) : null}
 
-            {/* ✅ Save */}
             <button
               type="button"
               onClick={handleSave}
@@ -110,7 +107,6 @@ export default function JobCard({ job, onOpen, onSavedChange }) {
               {saved ? "Saved" : "Save"}
             </button>
 
-            {/* ✅ Share */}
             <button
               type="button"
               onClick={handleShare}
