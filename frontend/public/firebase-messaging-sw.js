@@ -3,12 +3,12 @@ importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js
 importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-messaging-compat.js");
 
 firebase.initializeApp({
-  apiKey: "REPLACE_AT_BUILD_TIME",
-  authDomain: "REPLACE_AT_BUILD_TIME",
-  projectId: "REPLACE_AT_BUILD_TIME",
-  storageBucket: "REPLACE_AT_BUILD_TIME",
-  messagingSenderId: "REPLACE_AT_BUILD_TIME",
-  appId: "REPLACE_AT_BUILD_TIME"
+  apiKey: "AIzaSyDkJHAAIo51cd4wtZGlhNnonAad9P37KaA",
+    authDomain: "saudi-job-f499b.firebaseapp.com",
+    projectId: "saudi-job-f499b",
+    storageBucket: "saudi-job-f499b.firebasestorage.app",
+    messagingSenderId: "316409349988",
+    appId: "1:316409349988:web:e0f28e55e1c3d89880dc71",
 });
 
 const messaging = firebase.messaging();
