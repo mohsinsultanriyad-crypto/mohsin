@@ -75,8 +75,8 @@ async function maybeSendNewsPush() {
   const tokens = tokensDocs.map((t) => t.token);
 
   const payload = {
-    title: "Saudi Labour News",
-    body: "New rule announced • Tap to read",
+    title: "Saved Jobs",
+    body: "New Jobs • Tap to read",
     data: {
       type: "news",
       targetTab: "updates",
