@@ -54,9 +54,13 @@ export default function MyPosts() {
         city: next.city,
         jobRole: next.jobRole,
         description: next.description,
-        urgent: !!next.urgent
+        urgent: !!next.urgent // ✅ EditForm se true/false aayega
       });
-      setJobs((prev) => prev.map((j) => (j._id === updated._id ? { ...j, ...updated } : j)));
+
+      setJobs((prev) =>
+        prev.map((j) => (j._id === updated._id ? { ...j, ...updated } : j))
+      );
+
       alert("Updated.");
       setOpen(false);
     } catch (e) {
@@ -67,6 +71,7 @@ export default function MyPosts() {
   async function onDelete(jobId) {
     const ok = confirm("Delete this job?");
     if (!ok) return;
+
     try {
       await deleteJob(jobId, email);
       setJobs((prev) => prev.filter((j) => j._id !== jobId));
@@ -145,6 +150,8 @@ function EditForm({ initial, onSave, onDelete }) {
   const [city, setCity] = useState(initial.city || "");
   const [jobRole, setJobRole] = useState(initial.jobRole || "");
   const [description, setDescription] = useState(initial.description || "");
+
+  // ✅ urgentActive server se aata hai, edit me urgent boolean chahiye
   const [urgent, setUrgent] = useState(!!initial.urgentActive);
 
   return (
@@ -187,7 +194,7 @@ function EditForm({ initial, onSave, onDelete }) {
             city,
             jobRole,
             description,
-            urgent
+            urgent // ✅ send boolean
           })
         }
       >
@@ -217,6 +224,3 @@ function Field({ label, value, onChange }) {
     </div>
   );
 }
-
-import { useEffect, useMemo, useState } from "react";
-
