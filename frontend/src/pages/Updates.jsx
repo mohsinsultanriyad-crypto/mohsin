@@ -1,94 +1,128 @@
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { api } from "../services/api";
-import Sheet from "../components/Sheet";
+import { useEffect, useState } from "react";
+import Loading from "../components/Loading.jsx";
+import Empty from "../components/Empty.jsx";
+import ModalSheet from "../components/ModalSheet.jsx";
+import NewsCard from "../components/NewsCard.jsx";
+import JobCard from "../components/JobCard.jsx";
+import { fetchNews } from "../services/newsApi.js";
+import { fetchJobs, viewJob } from "../services/jobsApi.js";
 
 export default function Updates() {
+  const [loading, setLoading] = useState(true);
   const [news, setNews] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState(null);
+  const [jobsFallback, setJobsFallback] = useState([]);
 
-  const [params] = useSearchParams();
-  const openLink = useMemo(() => params.get("open") || "", [params]);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(null);
 
   async function load() {
-    const n = await api.getNews().catch(() => []);
-    setNews(n || []);
+    setLoading(true);
+    try {
+      const list = await fetchNews(30);
+      setNews(list);
 
-    if (!n || n.length === 0) {
-      const j = await api.getJobs().catch(() => []);
-      setJobs((j || []).slice(0, 5));
-    } else {
-      setJobs([]);
+      if (!list.length) {
+        const jobs = await fetchJobs();
+        setJobsFallback(jobs.slice(0, 5));
+      } else {
+        setJobsFallback([]);
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, []);
-
   useEffect(() => {
-    if (!openLink) return;
-    // auto open article if present
-    const item = news.find((x) => x.link === openLink);
-    if (item) {
-      setSelected(item);
-      setOpen(true);
-    } else if (openLink) {
-      // if not loaded yet, open directly
-      window.open(openLink, "_blank");
-    }
-  }, [openLink, news]);
+    load();
+  }, []);
+
+  function openNews(item) {
+    setActive({ type: "news", item });
+    setOpen(true);
+  }
+
+  async function openJob(job) {
+    setActive({ type: "job", job });
+    setOpen(true);
+    try {
+      await viewJob(job._id);
+    } catch {}
+  }
 
   return (
-    <div className="mx-auto max-w-md p-4">
-      <div className="mb-3 text-xl font-bold text-blue-700">Updates</div>
+    <div>
+      <div className="mb-3">
+        <div className="text-lg font-bold text-gray-900">Updates</div>
+        <div className="mt-1 text-sm text-gray-500">Saudi labour news</div>
+      </div>
 
-      {news.length > 0 ? (
+      {loading ? <Loading /> : null}
+
+      {!loading && news.length === 0 && jobsFallback.length === 0 ? (
+        <Empty title="No updates yet" desc="News will appear here." />
+      ) : null}
+
+      {!loading && news.length > 0 ? (
         <div className="space-y-3">
           {news.map((n) => (
-            <div
-              key={n._id || n.link}
-              onClick={() => { setSelected(n); setOpen(true); }}
-              className="cursor-pointer rounded-2xl border bg-white p-4 shadow-sm active:scale-[0.99]"
-            >
-              <div className="text-sm text-gray-500">{n.source || "Saudi News"}</div>
-              <div className="mt-1 text-base font-semibold text-blue-700">{n.title}</div>
-              <div className="mt-2 line-clamp-2 text-sm text-gray-700">{n.summary || ""}</div>
-              <div className="mt-3 text-xs text-gray-400">
-                {n.publishedAt ? new Date(n.publishedAt).toLocaleString() : ""}
-              </div>
-            </div>
+            <NewsCard key={n._id || n.link} item={n} onOpen={() => openNews(n)} />
           ))}
         </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="rounded-2xl border bg-white p-4 text-sm text-gray-500">
-            News not available. Showing latest jobs.
-          </div>
-          {jobs.map((j) => (
-            <div key={j._id} className="rounded-2xl border bg-white p-4 shadow-sm">
-              <div className="text-lg font-semibold">{j.jobRole}</div>
-              <div className="text-sm text-gray-500">{j.city}</div>
-              <div className="mt-2 line-clamp-2 text-sm text-gray-700">{j.description}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      ) : null}
 
-      <Sheet open={open} onClose={() => setOpen(false)} title={selected ? "Saudi Labour News" : "News"}>
-        {selected && (
+      {!loading && news.length === 0 && jobsFallback.length > 0 ? (
+        <div className="mt-4 space-y-3">
+          <div className="text-sm font-semibold text-gray-900">Latest Jobs</div>
+          {jobsFallback.map((j) => (
+            <JobCard key={j._id} job={j} onOpen={() => openJob(j)} />
+          ))}
+        </div>
+      ) : null}
+
+      <ModalSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title={
+          active?.type === "news"
+            ? "News Summary"
+            : active?.type === "job"
+            ? `${active.job.jobRole} • ${active.job.city}`
+            : "Details"
+        }
+      >
+        {active?.type === "news" ? (
           <div className="space-y-3">
-            <div className="text-base font-semibold">{selected.title}</div>
-            <div className="text-sm text-gray-700">{selected.summary || ""}</div>
-            <button
-              onClick={() => window.open(selected.link, "_blank")}
-              className="w-full rounded-2xl bg-blue-600 py-3 text-sm font-semibold text-white"
+            <div className="text-sm font-semibold text-gray-900">{active.item.title}</div>
+            <div className="text-sm text-gray-700 whitespace-pre-wrap">
+              {active.item.snippet || "Open full article to read more."}
+            </div>
+            <a
+              className="block w-full rounded-2xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white"
+              href={active.item.link}
+              target="_blank"
+              rel="noreferrer"
             >
               Read Full Article
-            </button>
+            </a>
           </div>
-        )}
-      </Sheet>
+        ) : null}
+
+        {active?.type === "job" ? (
+          <div className="space-y-3">
+            <div className="text-sm text-gray-700 whitespace-pre-wrap">{active.job.description}</div>
+            <a
+              className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white"
+              href={`https://wa.me/${String(active.job.phone).replace(/\D/g, "")}?text=${encodeURIComponent(
+                `Hello, I want to apply for ${active.job.jobRole} in ${active.job.city}.`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Apply on WhatsApp
+            </a>
+          </div>
+        ) : null}
+      </ModalSheet>
     </div>
   );
 }

@@ -1,49 +1,52 @@
-/* global firebase */
-importScripts("https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging-compat.js");
+/* eslint-disable no-undef */
+importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-messaging-compat.js");
 
 firebase.initializeApp({
- apiKey: "AIzaSyDkJHAAIo51cd4wtZGlhNnonAad9P37KaA",
-   authDomain: "saudi-job-f499b.firebaseapp.com",
-   projectId: "saudi-job-f499b",
-   storageBucket: "saudi-job-f499b.firebasestorage.app",
-   messagingSenderId: "316409349988",
-   appId: "1:316409349988:web:e0f28e55e1c3d89880dc71",
+  apiKey: "REPLACE_AT_BUILD_TIME",
+  authDomain: "REPLACE_AT_BUILD_TIME",
+  projectId: "REPLACE_AT_BUILD_TIME",
+  storageBucket: "REPLACE_AT_BUILD_TIME",
+  messagingSenderId: "REPLACE_AT_BUILD_TIME",
+  appId: "REPLACE_AT_BUILD_TIME"
 });
 
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage((payload) => {
-  const title = payload?.notification?.title || "Saudi Job";
-  const options = {
-    body: payload?.notification?.body || "",
-    data: payload?.data || {}
-  };
-  self.registration.showNotification(title, options);
+// Handles background notifications display (Firebase will show it)
+messaging.onBackgroundMessage(function () {
+  // no-op
 });
 
-self.addEventListener("notificationclick", (event) => {
+// Open correct tab on notification click
+self.addEventListener("notificationclick", function (event) {
   event.notification.close();
 
   const data = event.notification?.data || {};
-  const target = data.clickTarget || "alerts";
-  const newsLink = data.newsLink || "";
+  const targetTab = data.targetTab || data?.FCM_MSG?.data?.targetTab || "";
+  const link = data.link || data?.FCM_MSG?.data?.link || "";
+  const jobId = data.jobId || data?.FCM_MSG?.data?.jobId || "";
 
-  let url = `${self.location.origin}/${target}`;
+  let url = "/";
+  if (targetTab === "alerts") url = "/alerts";
+  if (targetTab === "updates") url = "/updates";
 
-  if (target === "updates" && newsLink) {
-    url = `${self.location.origin}/updates?open=${encodeURIComponent(newsLink)}`;
-  }
+  const params = new URLSearchParams();
+  if (link) params.set("link", link);
+  if (jobId) params.set("jobId", jobId);
+
+  const finalUrl = params.toString() ? `${url}?${params.toString()}` : url;
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url.startsWith(self.location.origin) && "focus" in client) {
-          client.navigate(url);
+        if ("focus" in client) {
+          client.navigate(finalUrl);
           return client.focus();
         }
       }
-      if (clients.openWindow) return clients.openWindow(url);
+      if (clients.openWindow) return clients.openWindow(finalUrl);
+      return null;
     })
   );
 });

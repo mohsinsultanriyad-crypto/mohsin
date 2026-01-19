@@ -1,11 +1,39 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { api } from "../services/api";
-import { cities } from "../utils/cities";
-import { roles } from "../utils/roles";
+import Card from "../components/Card.jsx";
+import { postJob } from "../services/jobsApi.js";
+
+const cities = [
+  "Riyadh",
+  "Jeddah",
+  "Dammam",
+  "Khobar",
+  "Jubail",
+  "Mecca",
+  "Medina",
+  "Taif",
+  "Tabuk",
+  "Hail",
+  "Abha",
+  "Jazan",
+  "Najran",
+  "Al Ahsa"
+];
+
+const roles = [
+  "Helper",
+  "Driver",
+  "Painter",
+  "Electrician",
+  "Plumber",
+  "Welder",
+  "Pipe Fitter",
+  "Scaffolder",
+  "Mason",
+  "Carpenter",
+  "AC Technician"
+];
 
 export default function PostJob() {
-  const nav = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const [name, setName] = useState("");
@@ -17,52 +45,127 @@ export default function PostJob() {
   const [description, setDescription] = useState("");
   const [urgent, setUrgent] = useState(false);
 
-  async function publish() {
+  async function handlePublish() {
     try {
       setLoading(true);
-      await api.postJob({ name, companyName, phone, email, city, jobRole, description, urgent });
-      alert("Job posted successfully");
-      nav("/");
+      await postJob({
+        name,
+        companyName,
+        phone,
+        email,
+        city,
+        jobRole,
+        description,
+        urgent
+      });
+      alert("Job posted successfully.");
+      setName("");
+      setCompanyName("");
+      setPhone("");
+      setEmail("");
+      setCity("Riyadh");
+      setJobRole("Helper");
+      setDescription("");
+      setUrgent(false);
     } catch (e) {
-      alert("Post failed. Check fields.");
+      alert(e?.message || "Failed to post job");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-md p-4">
-      <div className="mb-3 text-xl font-bold text-blue-700">Post Job</div>
-
-      <div className="space-y-3">
-        <input className="w-full rounded-2xl border p-3 text-sm" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <input className="w-full rounded-2xl border p-3 text-sm" placeholder="Company Name (optional)" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-        <input className="w-full rounded-2xl border p-3 text-sm" placeholder="Phone (WhatsApp)" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        <input className="w-full rounded-2xl border p-3 text-sm" placeholder="Email (for My Posts)" value={email} onChange={(e) => setEmail(e.target.value)} />
-
-        <select className="w-full rounded-2xl border p-3 text-sm" value={city} onChange={(e) => setCity(e.target.value)}>
-          {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-
-        <select className="w-full rounded-2xl border p-3 text-sm" value={jobRole} onChange={(e) => setJobRole(e.target.value)}>
-          {roles.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-
-        <textarea className="w-full rounded-2xl border p-3 text-sm" rows={5} placeholder="Job Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-
-        <label className="flex items-center gap-2 text-sm text-gray-700">
-          <input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} />
-          Urgent Hiring (24h highlight)
-        </label>
-
-        <button
-          onClick={publish}
-          disabled={loading}
-          className="w-full rounded-2xl bg-blue-600 py-3 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {loading ? "Publishing..." : "Publish Job"}
-        </button>
+    <div>
+      <div className="mb-3">
+        <div className="text-lg font-bold text-gray-900">Post Job</div>
+        <div className="mt-1 text-sm text-gray-500">Publish job to all users</div>
       </div>
+
+      <Card className="p-4">
+        <div className="space-y-3">
+          <Input label="Name" value={name} onChange={setName} placeholder="Your name" />
+          <Input
+            label="Company Name (optional)"
+            value={companyName}
+            onChange={setCompanyName}
+            placeholder="Company name"
+          />
+          <Input
+            label="Phone"
+            value={phone}
+            onChange={setPhone}
+            placeholder="WhatsApp number"
+          />
+          <Input label="Email" value={email} onChange={setEmail} placeholder="Email for my posts" />
+
+          <Select label="City" value={city} onChange={setCity} options={cities} />
+          <Select label="Job Role" value={jobRole} onChange={setJobRole} options={roles} />
+
+          <div>
+            <div className="mb-1 text-xs font-semibold text-gray-700">Description</div>
+            <textarea
+              className="w-full rounded-2xl bg-gray-50 p-3 text-sm text-gray-800 ring-1 ring-black/5 outline-none"
+              rows={5}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Job details..."
+            />
+          </div>
+
+          <button
+            type="button"
+            className={[
+              "flex w-full items-center justify-between rounded-2xl px-4 py-3 ring-1 ring-black/5",
+              urgent ? "bg-red-50" : "bg-gray-50"
+            ].join(" ")}
+            onClick={() => setUrgent((v) => !v)}
+          >
+            <div className="text-sm font-semibold text-gray-800">Urgent Hiring (24h)</div>
+            <div className="text-sm font-semibold">{urgent ? "ON" : "OFF"}</div>
+          </button>
+
+          <button
+            disabled={loading}
+            onClick={handlePublish}
+            className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {loading ? "Publishing..." : "Publish Job"}
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Input({ label, value, onChange, placeholder }) {
+  return (
+    <div>
+      <div className="mb-1 text-xs font-semibold text-gray-700">{label}</div>
+      <input
+        className="w-full rounded-2xl bg-gray-50 px-3 py-3 text-sm text-gray-800 ring-1 ring-black/5 outline-none"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
+function Select({ label, value, onChange, options }) {
+  return (
+    <div>
+      <div className="mb-1 text-xs font-semibold text-gray-700">{label}</div>
+      <select
+        className="w-full rounded-2xl bg-gray-50 px-3 py-3 text-sm text-gray-800 ring-1 ring-black/5 outline-none"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((o) => (
+          <option value={o} key={o}>
+            {o}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

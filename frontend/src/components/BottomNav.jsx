@@ -1,31 +1,37 @@
-import { Link, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import Badge from "./Badge.jsx";
 
-function Tab({ to, label, active, badge }) {
+function Tab({ to, label, badge }) {
   return (
-    <Link to={to} className="flex-1">
-      <div className={`relative py-3 text-center text-sm ${active ? "font-semibold text-blue-600" : "text-gray-500"}`}>
-        {label}
-        {badge > 0 && (
-          <span className="absolute top-2 right-6 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs text-white">
-            {badge}
-          </span>
-        )}
-      </div>
-    </Link>
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        [
+          "relative flex flex-1 flex-col items-center justify-center py-2 text-xs",
+          isActive ? "text-blue-600" : "text-gray-500"
+        ].join(" ")
+      }
+    >
+      <span className="font-semibold">{label}</span>
+      {to === "/alerts" ? <Badge value={badge} /> : null}
+    </NavLink>
   );
 }
 
-export default function BottomNav({ badgeCount }) {
-  const { pathname } = useLocation();
-
+export default function BottomNav({ badge = 0 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t bg-white">
-      <div className="mx-auto flex max-w-md">
-        <Tab to="/" label="Home" active={pathname === "/"} />
-        <Tab to="/post" label="Post Job" active={pathname === "/post"} />
-        <Tab to="/alerts" label="Alerts" active={pathname === "/alerts"} badge={badgeCount} />
-        <Tab to="/myposts" label="My Posts" active={pathname === "/myposts"} />
-        <Tab to="/updates" label="Updates" active={pathname === "/updates"} />
+    <div className="fixed bottom-0 left-0 right-0 z-50">
+      <div className="mx-auto max-w-md">
+        <div className="mx-3 mb-3 rounded-2xl bg-white shadow-soft ring-1 ring-black/5">
+          <div className="flex">
+            <Tab to="/" label="Home" />
+            <Tab to="/post" label="Post Job" />
+            <Tab to="/alerts" label="Alerts" badge={badge} />
+            <Tab to="/myposts" label="My Posts" />
+            <Tab to="/updates" label="Updates" />
+          </div>
+        </div>
+        <div className="pb-[env(safe-area-inset-bottom)]" />
       </div>
     </div>
   );
