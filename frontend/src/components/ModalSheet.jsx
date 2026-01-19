@@ -14,7 +14,7 @@ export default function ModalSheet({ open, onClose, title, children }) {
           />
 
           <motion.div
-            className="fixed left-0 right-0 z-50 mx-auto max-w-md bottom-20"
+            className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md"
             initial={{ y: 400 }}
             animate={{ y: 0 }}
             exit={{ y: 400 }}
@@ -32,7 +32,7 @@ export default function ModalSheet({ open, onClose, title, children }) {
                 </button>
               </div>
 
-              {/* ✅ extra bottom padding so button never hides behind bottom nav */}
+              {/* ✅ enough space so last button never hides behind BottomNav */}
               <div className="max-h-[70vh] overflow-auto px-4 pb-24">
                 {children}
               </div>

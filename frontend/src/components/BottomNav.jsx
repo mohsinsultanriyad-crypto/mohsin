@@ -8,9 +8,9 @@ function Tab({ to, label, badge }) {
       className={({ isActive }) =>
         [
           "relative flex flex-1 items-center justify-center",
-          "min-h-[56px] px-2", // ✅ bigger touch area
-          "text-sm font-semibold", // ✅ readable
-          isActive ? "text-blue-600" : "text-gray-500"
+          "min-h-[54px] px-2 rounded-full", // ✅ touch + shape
+          "text-sm font-semibold",
+          isActive ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-100"
         ].join(" ")
       }
     >
@@ -22,21 +22,15 @@ function Tab({ to, label, badge }) {
 
 export default function BottomNav({ badge = 0 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="mx-auto max-w-md">
-        <div className="mx-3 mb-3 rounded-2xl bg-white shadow-soft ring-1 ring-black/5">
-          {/* ✅ extra padding inside nav container */}
-          <div className="flex px-1 py-1">
-            <Tab to="/" label="Home" />
-            <Tab to="/post" label="Post Job" />
-            <Tab to="/alerts" label="Alerts" badge={badge} />
-            <Tab to="/myposts" label="My Posts" />
-            <Tab to="/updates" label="Updates" />
-          </div>
+    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-[min(520px,calc(100%-24px))]">
+      <div className="rounded-full bg-white/95 shadow-soft ring-1 ring-black/10 px-2 py-2">
+        <div className="flex gap-1">
+          <Tab to="/" label="Home" badge={badge} />
+          <Tab to="/post" label="Post Job" badge={badge} />
+          <Tab to="/alerts" label="Alerts" badge={badge} />
+          <Tab to="/myposts" label="My Posts" badge={badge} />
+          <Tab to="/updates" label="Updates" badge={badge} />
         </div>
-
-        {/* iPhone safe area */}
-        <div className="pb-[env(safe-area-inset-bottom)]" />
       </div>
     </div>
   );
