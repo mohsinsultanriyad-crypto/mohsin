@@ -1,10 +1,13 @@
 import mongoose from "mongoose";
 
-export async function connectDB(MONGO_URL) {
-  if (!MONGO_URL) throw new Error("MONGO_URL missing");
+export async function connectDB(mongoUri) {
+  if (!mongoUri) throw new Error("MONGODB_URI missing");
 
   mongoose.set("strictQuery", true);
-  await mongoose.connect(MONGO_URL);
+
+  await mongoose.connect(mongoUri, {
+    autoIndex: true
+  });
 
   console.log("✅ MongoDB connected");
 }
