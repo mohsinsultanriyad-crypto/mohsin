@@ -1,15 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Loading from "../components/Loading.jsx";
 import Empty from "../components/Empty.jsx";
 import JobCard from "../components/JobCard.jsx";
 import ModalSheet from "../components/ModalSheet.jsx";
 import { fetchJobs, viewJob } from "../services/jobsApi.js";
 
+import { getSavedJobs, isJobSaved, toggleSavedJob } from "../lib/storage.js";
+
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(null);
+
+  // ✅ keep saved ids in state so UI updates instantly (no refresh)
+  const [savedIds, setSavedIds] = useState(() => getSavedJobs());
+
+  const activeSaved = useMemo(() => {
+    if (!active?._id) return false;
+    return savedIds.includes(String(active._id));
+  }, [active, savedIds]);
 
   async function load() {
     setLoading(true);
@@ -34,6 +44,50 @@ export default function Home() {
         prev.map((j) => (j._id === job._id ? { ...j, views: (j.views || 0) + 1 } : j))
       );
     } catch {}
+  }
+
+  function handleToggleSave() {
+    if (!active?._id) return;
+    const next = toggleSavedJob(active._id);
+    setSavedIds(next);
+  }
+
+  async function handleShare() {
+    if (!active) return;
+
+    const phone = String(active.phone || "").replace(/\D/g, "");
+    const wa = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(
+          `Hello, I want to apply for ${active.jobRole} in ${active.city}.`
+        )}`
+      : "";
+
+    const text =
+      `SAUDI JOB\n` +
+      `${active.jobRole} • ${active.city}\n\n` +
+      `${active.description || ""}\n\n` +
+      (wa ? `Apply WhatsApp: ${wa}\n` : "") +
+      `\n`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Job: ${active.jobRole} • ${active.city}`,
+          text
+        });
+        return;
+      }
+    } catch {
+      // ignore share cancel
+    }
+
+    // fallback: copy
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard ✅");
+    } catch {
+      alert(text);
+    }
   }
 
   return (
@@ -71,6 +125,29 @@ export default function Home() {
               <div className="mt-1 text-sm text-gray-600">{active.phone}</div>
             </div>
 
+            {/* ✅ Save + Share row */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleToggleSave}
+                className={[
+                  "w-full rounded-2xl px-4 py-3 text-center text-sm font-semibold ring-1 ring-black/5",
+                  activeSaved ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-800"
+                ].join(" ")}
+              >
+                {activeSaved ? "Saved ✓" : "Save"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-full rounded-2xl bg-gray-900 px-4 py-3 text-center text-sm font-semibold text-white"
+              >
+                Share
+              </button>
+            </div>
+
+            {/* ✅ WhatsApp */}
             <a
               className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white"
               href={`https://wa.me/${String(active.phone).replace(/\D/g, "")}?text=${encodeURIComponent(
