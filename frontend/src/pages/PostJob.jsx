@@ -3,35 +3,27 @@ import Card from "../components/Card.jsx";
 import { postJob } from "../services/jobsApi.js";
 
 const cities = [
-  "Riyadh",
-  "Jeddah",
-  "Dammam",
-  "Khobar",
-  "Jubail",
-  "Mecca",
-  "Medina",
-  "Taif",
-  "Tabuk",
-  "Hail",
-  "Abha",
-  "Jazan",
-  "Najran",
-  "Al Ahsa"
+  "Riyadh","Jeddah","Dammam","Khobar","Jubail","Mecca","Medina","Taif",
+  "Tabuk","Hail","Abha","Jazan","Najran","Al Ahsa"
 ];
 
 const roles = [
-  "Helper",
-  "Driver",
-  "Painter",
-  "Electrician",
-  "Plumber",
-  "Welder",
-  "Pipe Fitter",
-  "Scaffolder",
-  "Mason",
-  "Carpenter",
-  "AC Technician"
+  "Helper","Driver","Painter","Electrician","Plumber","Welder","Pipe Fitter",
+  "Scaffolder","Mason","Carpenter","AC Technician"
 ];
+
+function isValidEmail(v) {
+  return /^\S+@\S+\.\S+$/.test(v);
+}
+
+function normalizePhone(v) {
+  // keep + and digits only
+  const s = String(v || "").trim();
+  const hasPlus = s.startsWith("+");
+  const digits = s.replace(/\D/g, "");
+  if (!digits) return "";
+  return hasPlus ? `+${digits}` : digits;
+}
 
 export default function PostJob() {
   const [loading, setLoading] = useState(false);
@@ -46,19 +38,39 @@ export default function PostJob() {
   const [urgent, setUrgent] = useState(false);
 
   async function handlePublish() {
+    if (loading) return; // ✅ prevent double submit
+
+    const cleanName = name.trim();
+    const cleanCompany = companyName.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = normalizePhone(phone);
+    const cleanDesc = description.trim();
+
+    // ✅ Required checks
+    if (!cleanName) return alert("Enter your name");
+    if (!cleanPhone || cleanPhone.replace(/\D/g, "").length < 8)
+      return alert("Enter valid phone / WhatsApp number");
+    if (!cleanEmail || !isValidEmail(cleanEmail))
+      return alert("Enter valid email");
+    if (!cleanDesc || cleanDesc.length < 10)
+      return alert("Description must be at least 10 characters");
+
     try {
       setLoading(true);
+
       await postJob({
-        name,
-        companyName,
-        phone,
-        email,
+        name: cleanName,
+        companyName: cleanCompany,
+        phone: cleanPhone,
+        email: cleanEmail,
         city,
         jobRole,
-        description,
+        description: cleanDesc,
         urgent
       });
+
       alert("Job posted successfully.");
+
       setName("");
       setCompanyName("");
       setPhone("");
@@ -94,9 +106,14 @@ export default function PostJob() {
             label="Phone"
             value={phone}
             onChange={setPhone}
-            placeholder="WhatsApp number"
+            placeholder="WhatsApp number (ex: +9665xxxxxxx)"
           />
-          <Input label="Email" value={email} onChange={setEmail} placeholder="Email for my posts" />
+          <Input
+            label="Email"
+            value={email}
+            onChange={setEmail}
+            placeholder="Email for My Posts (edit/delete)"
+          />
 
           <Select label="City" value={city} onChange={setCity} options={cities} />
           <Select label="Job Role" value={jobRole} onChange={setJobRole} options={roles} />

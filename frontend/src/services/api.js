@@ -1,41 +1,58 @@
-const BASE = import.meta.env.VITE_API_URL;
+// ✅ Safe base url (no undefined)
+const RAW_BASE = import.meta.env.VITE_API_URL || "";
+const BASE = RAW_BASE.replace(/\/+$/, ""); // remove ending /
 
-export async function apiGet(path) {
-  const res = await fetch(`${BASE}${path}`);
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || "Request failed");
+function makeUrl(path) {
+  const p = path.startsWith("/") ? path : `/${path}`;
+
+  // If env missing, fallback to backend you already know
+  const base = BASE || "https://mohsin-pil4.onrender.com";
+
+  return `${base}${p}`;
+}
+
+async function parseJson(res) {
+  try {
+    return await res.json();
+  } catch {
+    return {};
+  }
+}
+
+async function request(method, path, body) {
+  const url = makeUrl(path);
+
+  const options = {
+    method,
+    headers: { "Content-Type": "application/json" }
+  };
+
+  if (body !== undefined) {
+    options.body = JSON.stringify(body || {});
+  }
+
+  const res = await fetch(url, options);
+  const data = await parseJson(res);
+
+  if (!res.ok) {
+    throw new Error(data?.message || `${method} ${path} failed`);
+  }
+
   return data;
 }
 
-export async function apiPost(path, body) {
-  const res = await fetch(`${BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body || {})
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || "Request failed");
-  return data;
+export function apiGet(path) {
+  return request("GET", path);
 }
 
-export async function apiPatch(path, body) {
-  const res = await fetch(`${BASE}${path}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body || {})
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || "Request failed");
-  return data;
+export function apiPost(path, body) {
+  return request("POST", path, body);
 }
 
-export async function apiDelete(path, body) {
-  const res = await fetch(`${BASE}${path}`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body || {})
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || "Request failed");
-  return data;
+export function apiPatch(path, body) {
+  return request("PATCH", path, body);
+}
+
+export function apiDelete(path, body) {
+  return request("DELETE", path, body);
 }
