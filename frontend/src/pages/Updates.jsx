@@ -18,12 +18,13 @@ export default function Updates() {
   async function load() {
     setLoading(true);
     try {
-      const list = await fetchNews(30);
+      // ✅ ONLY 5 NEWS
+      const list = await fetchNews(5);
       setNews(list);
 
       if (!list.length) {
         const jobs = await fetchJobs();
-        setJobsFallback(jobs.slice(0, 5));
+        setJobsFallback(jobs.slice(0, 5)); // ✅ ONLY 5 JOBS FALLBACK
       } else {
         setJobsFallback([]);
       }
@@ -64,7 +65,8 @@ export default function Updates() {
 
       {!loading && news.length > 0 ? (
         <div className="space-y-3">
-          {news.map((n) => (
+          {/* ✅ double safety */}
+          {news.slice(0, 5).map((n) => (
             <NewsCard key={n._id || n.link} item={n} onOpen={() => openNews(n)} />
           ))}
         </div>
@@ -73,7 +75,7 @@ export default function Updates() {
       {!loading && news.length === 0 && jobsFallback.length > 0 ? (
         <div className="mt-4 space-y-3">
           <div className="text-sm font-semibold text-gray-900">Latest Jobs</div>
-          {jobsFallback.map((j) => (
+          {jobsFallback.slice(0, 5).map((j) => (
             <JobCard key={j._id} job={j} onOpen={() => openJob(j)} />
           ))}
         </div>

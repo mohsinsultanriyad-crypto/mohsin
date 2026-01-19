@@ -12,12 +12,14 @@ export default function NewsCard({ item, onOpen }) {
       <div className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
         <div className="flex gap-3">
           {item.image ? (
-            <img
-              src={item.image}
-              alt=""
-              className="h-16 w-16 rounded-xl object-cover ring-1 ring-black/5"
-              loading="lazy"
-            />
+            <div className="text-sm font-semibold text-blue-700">
+              {n.title}
+            </div>
+
+            <div className="text-xs text-gray-500 mt-1">
+              {n.source} • {n.publishedAtHuman}
+            </div>
+
           ) : (
             <div className="h-16 w-16 rounded-xl bg-gray-100 ring-1 ring-black/5" />
           )}
