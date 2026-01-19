@@ -3,7 +3,7 @@ const K = {
   roles: "sj_roles",
   newsEnabled: "sj_news_enabled",
   token: "sj_fcm_token",
-  myEmail: "sj_my_email"
+  myEmail: "sj_my_email",
   savedJobs: "sj_saved_jobs",
 };
 
