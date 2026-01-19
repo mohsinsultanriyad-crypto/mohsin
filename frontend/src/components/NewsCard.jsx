@@ -10,28 +10,23 @@ export default function NewsCard({ item, onOpen }) {
       onClick={onOpen}
     >
       <div className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
-        <div className="flex gap-3">
-          {item.image ? (
-            <div className="text-sm font-semibold text-blue-700">
-              {n.title}
-            </div>
 
-            <div className="text-xs text-gray-500 mt-1">
-              {n.source} • {n.publishedAtHuman}
-            </div>
-
-          ) : (
-            <div className="h-16 w-16 rounded-xl bg-gray-100 ring-1 ring-black/5" />
-          )}
-          <div className="flex-1">
-            <div className="text-[13px] font-semibold text-blue-600">{item.title}</div>
-            <div className="mt-1 text-xs text-gray-500">
-              {item.source || "News"} • {timeAgo(item.publishedAt)}
-            </div>
-          </div>
+        {/* Title */}
+        <div className="text-[14px] font-semibold text-blue-700">
+          {item.title}
         </div>
+
+        {/* Source + Time */}
+        <div className="mt-1 text-xs text-gray-500">
+          {item.source || "Saudi News"} • {timeAgo(item.publishedAt)}
+        </div>
+
+        {/* Snippet */}
+        <div className="mt-2 text-sm text-gray-700 line-clamp-2">
+          {item.snippet || "Tap to read full article"}
+        </div>
+
       </div>
     </motion.button>
   );
 }
-

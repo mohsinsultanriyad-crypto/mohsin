@@ -6,14 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="32e99ab2-dd2b-4290-befa-a8430a9bb226" name="Changes" comment="">
       <change afterPath="$PROJECT_DIR$/backend/src/utils/newsImage.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/cron/news.cron.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/cron/news.cron.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/models/Job.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/models/Job.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/models/News.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/models/News.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/models/Token.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/models/Token.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/NewsCard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/NewsCard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Updates.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Updates.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
