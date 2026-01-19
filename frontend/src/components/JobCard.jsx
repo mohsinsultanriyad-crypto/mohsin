@@ -4,7 +4,7 @@ function shortDate(d) {
   try {
     const dt = new Date(d);
     if (Number.isNaN(dt.getTime())) return "";
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     return `${months[dt.getMonth()]} ${dt.getDate()}`;
   } catch {
     return "";
@@ -29,8 +29,7 @@ export default function JobCard({ job, onOpen }) {
           <div className="text-lg font-extrabold text-gray-900">{job.jobRole}</div>
 
           {dateText ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-100">
-              <span>📅</span>
+            <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
               {dateText}
             </span>
           ) : null}
@@ -38,18 +37,17 @@ export default function JobCard({ job, onOpen }) {
 
         <div className="mt-3 space-y-2 text-sm text-gray-700">
           <div className="flex items-center gap-2">
-            <span className="text-green-600">📍</span>
-            <span>{job.city}</span>
+            <span className="text-sm font-semibold text-gray-900">{job.city}</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-gray-500">🧰</span>
-            <span>Posted by: {postedBy}</span>
+            <span className="text-xs text-gray-500">Posted by:</span>
+            <span className="text-sm font-semibold text-gray-800">{postedBy}</span>
           </div>
         </div>
 
         <div className="mt-4 flex justify-end">
-          <span className="text-sm font-semibold text-green-600">View Details</span>
+          <span className="text-sm font-semibold text-blue-600">View Details</span>
         </div>
       </div>
     </motion.button>
