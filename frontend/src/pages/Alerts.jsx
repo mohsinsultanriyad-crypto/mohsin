@@ -3,7 +3,6 @@ import Card from "../components/Card.jsx";
 import Loading from "../components/Loading.jsx";
 import Empty from "../components/Empty.jsx";
 import MultiSelect from "../components/MultiSelect.jsx";
-import Toggle from "../components/Toggle.jsx";
 import ModalSheet from "../components/ModalSheet.jsx";
 import JobCard from "../components/JobCard.jsx";
 
@@ -11,14 +10,7 @@ import { getFcmToken } from "../firebase.js";
 import { upsertToken } from "../services/tokensApi.js";
 import { fetchJobs, viewJob } from "../services/jobsApi.js";
 
-import {
-  getRoles,
-  setRoles,
-  getNewsEnabled,
-  setNewsEnabled,
-  getSavedToken,
-  setSavedToken
-} from "../lib/storage.js";
+import { getRoles, setRoles, getSavedToken, setSavedToken } from "../lib/storage.js";
 
 const roleOptions = [
   "Helper",
@@ -39,7 +31,6 @@ export default function Alerts() {
   const [jobs, setJobs] = useState([]);
 
   const [roles, setRolesState] = useState(getRoles());
-  const [newsEnabled, setNewsEnabledState] = useState(getNewsEnabled());
   const [token, setToken] = useState(getSavedToken());
   const [saving, setSaving] = useState(false);
 
@@ -69,10 +60,6 @@ export default function Alerts() {
     setRoles(roles);
   }, [roles]);
 
-  useEffect(() => {
-    setNewsEnabled(newsEnabled);
-  }, [newsEnabled]);
-
   async function enableNotifications() {
     setSaving(true);
     try {
@@ -90,8 +77,7 @@ export default function Alerts() {
 
       await upsertToken({
         token: t.token,
-        roles,
-        newsEnabled
+        roles
       });
 
       setToken(t.token);
@@ -112,7 +98,7 @@ export default function Alerts() {
     }
     setSaving(true);
     try {
-      await upsertToken({ token, roles, newsEnabled });
+      await upsertToken({ token, roles });
       alert("Saved.");
     } catch (e) {
       alert(e?.message || "Save failed");
@@ -146,14 +132,6 @@ export default function Alerts() {
             <MultiSelect options={roleOptions} value={roles} onChange={setRolesState} />
           </div>
 
-          <div className="mt-4 space-y-2">
-            <Toggle
-              value={newsEnabled}
-              onChange={setNewsEnabledState}
-              label="Labour News Notifications"
-            />
-          </div>
-
           <div className="mt-4 grid grid-cols-1 gap-2">
             <button
               type="button"
@@ -173,9 +151,7 @@ export default function Alerts() {
               Save Preferences
             </button>
 
-            <div className="text-xs text-gray-500">
-              Token: {token ? "Saved" : "Not enabled"}
-            </div>
+            <div className="text-xs text-gray-500">Token: {token ? "Saved" : "Not enabled"}</div>
           </div>
         </Card>
 
