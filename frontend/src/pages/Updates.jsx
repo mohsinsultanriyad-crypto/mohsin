@@ -1,4 +1,3 @@
-// src/pages/Updates.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -19,6 +18,7 @@ export default function Updates() {
   const [open, setOpen] = useState(false);
   const [activeJob, setActiveJob] = useState(null);
 
+  // Load saved job IDs from localStorage
   const savedIds = useMemo(() => {
     const ids = getSavedJobs();
     return Array.isArray(ids) ? ids.map(String) : [];
@@ -27,10 +27,11 @@ export default function Updates() {
   async function load() {
     setLoading(true);
     try {
-      // ✅ Saved jobs show as many as user saved (no limit)
-      if (savedIds.length) {
-        const jobs = await fetchJobs();
-        const saved = jobs.filter((j) => savedIds.includes(String(j._id)));
+      if (savedIds.length > 0) {
+        const allJobs = await fetchJobs();
+        const saved = allJobs.filter((j) =>
+          savedIds.includes(String(j._id))
+        );
         setSavedJobs(saved);
       } else {
         setSavedJobs([]);
@@ -42,9 +43,9 @@ export default function Updates() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Open job modal
   async function openJob(job) {
     setActiveJob(job);
     setOpen(true);
@@ -53,7 +54,7 @@ export default function Updates() {
     } catch {}
   }
 
-  // ✅ If opened from notification: /updates?jobId=xxx
+  // If page opened from notification → /updates?jobId=xxxx
   useEffect(() => {
     if (loading) return;
 
@@ -61,42 +62,53 @@ export default function Updates() {
     const jobId = params.get("jobId");
 
     if (jobId) {
-      const found = savedJobs.find((j) => String(j._id) === String(jobId));
+      const found = savedJobs.find(
+        (j) => String(j._id) === String(jobId)
+      );
       if (found) openJob(found);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, loc.search]);
 
   return (
     <div>
       <div className="mb-3">
         <div className="text-lg font-bold text-gray-900">Updates</div>
-        <div className="mt-1 text-sm text-gray-500">Saved jobs</div>
+        <div className="mt-1 text-sm text-gray-500">
+          Saved Jobs
+        </div>
       </div>
 
-      {loading ? <Loading /> : null}
+      {loading && <Loading />}
 
-      {!loading && savedJobs.length === 0 ? (
+      {!loading && savedJobs.length === 0 && (
         <Empty
           title="No saved jobs"
-          desc="Home tab me kisi job ko Save karo, wo yahan show hoga."
+          desc="Home tab par kisi job ko Save karo, wo yahan dikhega."
         />
-      ) : null}
+      )}
 
-      {!loading && savedJobs.length > 0 ? (
+      {!loading && savedJobs.length > 0 && (
         <div className="space-y-3">
-          {savedJobs.map((j) => (
-            <JobCard key={j._id} job={j} onOpen={() => openJob(j)} />
+          {savedJobs.map((job) => (
+            <JobCard
+              key={job._id}
+              job={job}
+              onOpen={() => openJob(job)}
+            />
           ))}
         </div>
-      ) : null}
+      )}
 
       <ModalSheet
         open={open}
         onClose={() => setOpen(false)}
-        title={activeJob ? `${activeJob.jobRole} • ${activeJob.city}` : "Details"}
+        title={
+          activeJob
+            ? `${activeJob.jobRole} • ${activeJob.city}`
+            : "Details"
+        }
       >
-        {activeJob ? (
+        {activeJob && (
           <div className="space-y-3">
             <div className="text-sm text-gray-700 whitespace-pre-wrap">
               {activeJob.description}
@@ -113,9 +125,8 @@ export default function Updates() {
               Apply on WhatsApp
             </a>
           </div>
-        ) : null}
+        )}
       </ModalSheet>
     </div>
   );
 }
-```0
