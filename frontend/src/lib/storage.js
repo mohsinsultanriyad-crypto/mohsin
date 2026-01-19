@@ -68,14 +68,24 @@ export function getSavedJobs() {
   }
 }
 
+export function getSavedJobs() {
+  try {
+    const raw = localStorage.getItem(K.savedJobs);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
 export function isJobSaved(id) {
   return getSavedJobs().includes(String(id));
 }
 
-export function toggleSaveJob(id) {
-  const jobId = String(id);
+export function toggleSavedJob(id) {
+  const key = String(id);
   const list = getSavedJobs();
-  const next = list.includes(jobId) ? list.filter(x => x !== jobId) : [jobId, ...list];
-  localStorage.setItem(K.savedJobs, JSON.stringify(next.slice(0, 200)));
+  const next = list.includes(key) ? list.filter((x) => x !== key) : [key, ...list];
+  localStorage.setItem(K.savedJobs, JSON.stringify(next));
   return next;
 }
