@@ -7,12 +7,14 @@ function Tab({ to, label, badge }) {
       to={to}
       className={({ isActive }) =>
         [
-          "relative flex flex-1 flex-col items-center justify-center py-2 text-xs",
+          "relative flex flex-1 items-center justify-center",
+          "min-h-[56px] px-2", // ✅ bigger touch area
+          "text-sm font-semibold", // ✅ readable
           isActive ? "text-blue-600" : "text-gray-500"
         ].join(" ")
       }
     >
-      <span className="font-semibold">{label}</span>
+      <span>{label}</span>
       {to === "/alerts" ? <Badge value={badge} /> : null}
     </NavLink>
   );
@@ -23,7 +25,8 @@ export default function BottomNav({ badge = 0 }) {
     <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="mx-auto max-w-md">
         <div className="mx-3 mb-3 rounded-2xl bg-white shadow-soft ring-1 ring-black/5">
-          <div className="flex">
+          {/* ✅ extra padding inside nav container */}
+          <div className="flex px-1 py-1">
             <Tab to="/" label="Home" />
             <Tab to="/post" label="Post Job" />
             <Tab to="/alerts" label="Alerts" badge={badge} />
@@ -31,6 +34,8 @@ export default function BottomNav({ badge = 0 }) {
             <Tab to="/updates" label="Updates" />
           </div>
         </div>
+
+        {/* iPhone safe area */}
         <div className="pb-[env(safe-area-inset-bottom)]" />
       </div>
     </div>
