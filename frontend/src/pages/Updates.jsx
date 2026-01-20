@@ -8,11 +8,13 @@ import JobCard from "../components/JobCard.jsx";
 
 import { fetchJobs, viewJob } from "../services/jobsApi.js";
 import { getSavedJobs, toggleSavedJob } from "../lib/storage.js";
+import { toSaudiMsisdn } from "../lib/phone.js"; // ✅ SAME FIX AS HOME
 
 export default function Updates() {
   const loc = useLocation();
 
   const [loading, setLoading] = useState(true);
+
   const [savedIds, setSavedIds] = useState(() => {
     const ids = getSavedJobs();
     return Array.isArray(ids) ? ids.map(String) : [];
@@ -51,13 +53,21 @@ export default function Updates() {
     load();
   }, []);
 
-  // ✅ if user saves/unsaves in other tab, updates page also updates
+  // ✅ Update when saved jobs change (same tab + other tabs)
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key === "sj_saved_jobs") load();
     };
+
+    const onCustom = () => load();
+
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("sj_saved_jobs_changed", onCustom);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("sj_saved_jobs_changed", onCustom);
+    };
   }, []);
 
   async function openJob(job) {
@@ -70,32 +80,36 @@ export default function Updates() {
 
   function handleToggleSave() {
     if (!activeJob?._id) return;
+
     const next = toggleSavedJob(activeJob._id);
     setSavedIds(next);
 
-    // UI instantly update list without refresh
+    // ✅ tell same-tab listeners (Updates/Home) to refresh
+    window.dispatchEvent(new Event("sj_saved_jobs_changed"));
+
+    // ✅ instant UI update
     if (next.includes(String(activeJob._id))) {
-      // add if not exists
       setSavedJobs((prev) => {
         const exists = prev.some((j) => String(j._id) === String(activeJob._id));
         return exists ? prev : [activeJob, ...prev];
       });
     } else {
-      // remove
       setSavedJobs((prev) => prev.filter((j) => String(j._id) !== String(activeJob._id)));
-      setOpen(false); // optional: close modal after unsave
+      setOpen(false);
     }
   }
 
   async function handleShare() {
     if (!activeJob) return;
 
-    const phone = String(activeJob.phone || "").replace(/\D/g, "");
-    const wa = phone
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(
-          `Hello, I want to apply for ${activeJob.jobRole} in ${activeJob.city}.`
-        )}`
-      : "";
+    const msisdn = toSaudiMsisdn(activeJob.phone);
+
+    const wa =
+      msisdn && msisdn.length >= 10
+        ? `https://wa.me/${msisdn}?text=${encodeURIComponent(
+            `Hello, I want to apply for ${activeJob.jobRole} in ${activeJob.city}.`
+          )}`
+        : "";
 
     const text =
       `SAUDI JOB\n` +
@@ -121,7 +135,7 @@ export default function Updates() {
     }
   }
 
-  // If opened from notification → /updates?jobId=xxxx
+  // ✅ open from notification: /updates?jobId=xxxx
   useEffect(() => {
     if (loading) return;
 
@@ -135,6 +149,9 @@ export default function Updates() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, loc.search]);
 
+  const msisdn = activeJob ? toSaudiMsisdn(activeJob.phone) : "";
+  const waOk = msisdn && msisdn.length >= 10;
+
   return (
     <div>
       <div className="mb-3">
@@ -142,35 +159,30 @@ export default function Updates() {
         <div className="mt-1 text-sm text-gray-500">Saved Jobs</div>
       </div>
 
-      {loading && <Loading />}
+      {loading ? <Loading /> : null}
 
-      {!loading && savedJobs.length === 0 && (
-        <Empty
-          title="No saved jobs"
-          desc="Home tab par kisi job ko Save karo, wo yahan dikhega."
-        />
-      )}
+      {!loading && savedJobs.length === 0 ? (
+        <Empty title="No saved jobs" desc="Home tab par kisi job ko Save karo, wo yahan dikhega." />
+      ) : null}
 
-      {!loading && savedJobs.length > 0 && (
+      {!loading && savedJobs.length > 0 ? (
         <div className="space-y-3">
           {savedJobs.map((job) => (
             <JobCard key={job._id} job={job} onOpen={() => openJob(job)} />
           ))}
         </div>
-      )}
+      ) : null}
 
       <ModalSheet
         open={open}
         onClose={() => setOpen(false)}
         title={activeJob ? `${activeJob.jobRole} • ${activeJob.city}` : "Details"}
       >
-        {activeJob && (
+        {activeJob ? (
           <div className="space-y-3">
-            <div className="text-sm text-gray-700 whitespace-pre-wrap">
-              {activeJob.description}
-            </div>
+            <div className="text-sm text-gray-700 whitespace-pre-wrap">{activeJob.description}</div>
 
-            {/* ✅ Save + Share row */}
+            {/* ✅ Save + Share */}
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -192,22 +204,28 @@ export default function Updates() {
               </button>
             </div>
 
-            {/* ✅ WhatsApp */}
+            {/* ✅ WhatsApp (with correct Saudi number) */}
             <a
-              className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white"
-              href={`https://wa.me/${String(activeJob.phone).replace(/\D/g, "")}?text=${encodeURIComponent(
-                `Hello, I want to apply for ${activeJob.jobRole} in ${activeJob.city}.`
-              )}`}
+              className={`block w-full rounded-2xl px-4 py-3 text-center text-sm font-semibold text-white ${
+                waOk ? "bg-green-600" : "bg-gray-400 pointer-events-none"
+              }`}
+              href={
+                waOk
+                  ? `https://wa.me/${msisdn}?text=${encodeURIComponent(
+                      `Hello, I want to apply for ${activeJob.jobRole} in ${activeJob.city}.`
+                    )}`
+                  : "#"
+              }
               target="_blank"
               rel="noreferrer"
             >
               Apply on WhatsApp
             </a>
           </div>
-        )}
+        ) : null}
       </ModalSheet>
 
-      {/* ✅ Only Updates tab footer links */}
+      {/* ✅ Footer links only on Updates page */}
       <div className="mt-10 border-t border-gray-200 pt-4 pb-6 text-center">
         <div className="flex items-center justify-center gap-4 text-sm font-semibold">
           <Link className="text-gray-700 hover:text-blue-700" to="/privacy">
