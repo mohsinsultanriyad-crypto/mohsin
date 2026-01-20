@@ -14,6 +14,7 @@ import { getRoles, setRoles, getSavedToken, setSavedToken } from "../lib/storage
 
 // ✅ Add more roles here (keep names consistent with jobRole dropdown/backend)
 const roleOptions = [
+  "Other", //top
   "Helper",
   "Driver",
   "Painter",
