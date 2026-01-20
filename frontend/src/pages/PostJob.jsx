@@ -3,13 +3,36 @@ import Card from "../components/Card.jsx";
 import { postJob } from "../services/jobsApi.js";
 
 const cities = [
-  "Riyadh","Jeddah","Dammam","Khobar","Jubail","Mecca","Medina","Taif",
-  "Tabuk","Hail","Abha","Jazan","Najran","Al Ahsa"
+  "Other",
+  "Riyadh",
+  "Jeddah",
+  "Dammam",
+  "Khobar",
+  "Jubail",
+  "Mecca",
+  "Medina",
+  "Taif",
+  "Tabuk",
+  "Hail",
+  "Abha",
+  "Jazan",
+  "Najran",
+  "Al Ahsa"
 ];
 
 const roles = [
-  "Helper","Driver","Painter","Electrician","Plumber","Welder","Pipe Fitter",
-  "Scaffolder","Mason","Carpenter","AC Technician"
+  "Other",
+  "Helper",
+  "Driver",
+  "Painter",
+  "Electrician",
+  "Plumber",
+  "Welder",
+  "Pipe Fitter",
+  "Scaffolder",
+  "Mason",
+  "Carpenter",
+  "AC Technician"
 ];
 
 function isValidEmail(v) {
@@ -17,7 +40,6 @@ function isValidEmail(v) {
 }
 
 function normalizePhone(v) {
-  // keep + and digits only
   const s = String(v || "").trim();
   const hasPlus = s.startsWith("+");
   const digits = s.replace(/\D/g, "");
@@ -32,13 +54,18 @@ export default function PostJob() {
   const [companyName, setCompanyName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+
   const [city, setCity] = useState("Riyadh");
+  const [customCity, setCustomCity] = useState("");
+
   const [jobRole, setJobRole] = useState("Helper");
+  const [customRole, setCustomRole] = useState("");
+
   const [description, setDescription] = useState("");
   const [urgent, setUrgent] = useState(false);
 
   async function handlePublish() {
-    if (loading) return; // ✅ prevent double submit
+    if (loading) return;
 
     const cleanName = name.trim();
     const cleanCompany = companyName.trim();
@@ -46,14 +73,32 @@ export default function PostJob() {
     const cleanPhone = normalizePhone(phone);
     const cleanDesc = description.trim();
 
+    const isCityOther = city === "Other";
+    const isRoleOther = jobRole === "Other";
+
+    const cleanCustomCity = customCity.trim();
+    const cleanCustomRole = customRole.trim();
+
     // ✅ Required checks
     if (!cleanName) return alert("Enter your name");
+
     if (!cleanPhone || cleanPhone.replace(/\D/g, "").length < 8)
       return alert("Enter valid phone / WhatsApp number");
+
     if (!cleanEmail || !isValidEmail(cleanEmail))
       return alert("Enter valid email");
+
+    if (isCityOther && !cleanCustomCity)
+      return alert("Enter your city name");
+
+    if (isRoleOther && !cleanCustomRole)
+      return alert("Enter job role");
+
     if (!cleanDesc || cleanDesc.length < 10)
       return alert("Description must be at least 10 characters");
+
+    const finalCity = isCityOther ? cleanCustomCity : city;
+    const finalRole = isRoleOther ? cleanCustomRole : jobRole;
 
     try {
       setLoading(true);
@@ -63,8 +108,8 @@ export default function PostJob() {
         companyName: cleanCompany,
         phone: cleanPhone,
         email: cleanEmail,
-        city,
-        jobRole,
+        city: finalCity,
+        jobRole: finalRole,
         description: cleanDesc,
         urgent
       });
@@ -75,8 +120,13 @@ export default function PostJob() {
       setCompanyName("");
       setPhone("");
       setEmail("");
+
       setCity("Riyadh");
+      setCustomCity("");
+
       setJobRole("Helper");
+      setCustomRole("");
+
       setDescription("");
       setUrgent(false);
     } catch (e) {
@@ -96,18 +146,21 @@ export default function PostJob() {
       <Card className="p-4">
         <div className="space-y-3">
           <Input label="Name" value={name} onChange={setName} placeholder="Your name" />
+
           <Input
             label="Company Name (optional)"
             value={companyName}
             onChange={setCompanyName}
             placeholder="Company name"
           />
+
           <Input
             label="Phone"
             value={phone}
             onChange={setPhone}
             placeholder="WhatsApp number (ex: +9665xxxxxxx)"
           />
+
           <Input
             label="Email"
             value={email}
@@ -116,7 +169,28 @@ export default function PostJob() {
           />
 
           <Select label="City" value={city} onChange={setCity} options={cities} />
+
+          {/* ✅ Custom City */}
+          {city === "Other" ? (
+            <Input
+              label="Custom City"
+              value={customCity}
+              onChange={setCustomCity}
+              placeholder="Type your city (ex: Yanbu)"
+            />
+          ) : null}
+
           <Select label="Job Role" value={jobRole} onChange={setJobRole} options={roles} />
+
+          {/* ✅ Custom Role */}
+          {jobRole === "Other" ? (
+            <Input
+              label="Custom Job Role"
+              value={customRole}
+              onChange={setCustomRole}
+              placeholder="Type job role (ex: Laptop Repair)"
+            />
+          ) : null}
 
           <div>
             <div className="mb-1 text-xs font-semibold text-gray-700">Description</div>
