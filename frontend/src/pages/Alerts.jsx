@@ -12,6 +12,7 @@ import { fetchJobs, viewJob } from "../services/jobsApi.js";
 
 import { getRoles, setRoles, getSavedToken, setSavedToken } from "../lib/storage.js";
 
+// ✅ Add more roles here (keep names consistent with jobRole dropdown/backend)
 const roleOptions = [
   "Helper",
   "Driver",
@@ -23,8 +24,62 @@ const roleOptions = [
   "Scaffolder",
   "Mason",
   "Carpenter",
-  "AC Technician"
+  "AC Technician",
+
+  // ✅ more roles
+  "Steel Fixer",
+  "Shuttering Carpenter",
+  "Gypsum Carpenter",
+  "Tile Mason",
+  "Block Mason",
+  "Plaster Mason",
+  "Rigger",
+  "Forklift Operator",
+  "Crane Operator",
+  "Excavator Operator",
+  "Bobcat Operator",
+  "Duct Man",
+  "HVAC Technician",
+  "Fire Fighting Technician",
+  "Fire Alarm Technician",
+  "Cable Puller",
+  "Instrument Technician",
+  "Safety Officer",
+  "Store Keeper",
+  "Supervisor",
+  "Foreman",
+  "Labour",
+  "Cleaner"
 ];
+
+// ✅ WhatsApp phone normalize (Saudi default 966)
+function toWhatsappNumber(raw) {
+  let s = String(raw || "").trim();
+  if (!s) return "";
+
+  // keep only digits
+  s = s.replace(/\D/g, "");
+
+  // remove leading zeros
+  s = s.replace(/^0+/, "");
+
+  // if already starts with country code 966 → ok
+  if (s.startsWith("966")) return s;
+
+  // if user entered 9 digits (Saudi mobile without 0) e.g. 5XXXXXXXX
+  if (s.length === 9 && s.startsWith("5")) return `966${s}`;
+
+  // if user entered 10 digits starting with 05XXXXXXXX
+  if (s.length === 10 && s.startsWith("5") === false && s.startsWith("05")) {
+    return `966${s.slice(1)}`;
+  }
+
+  // if number looks like Saudi mobile starting with 5 and length 10/11 etc
+  if (s.startsWith("5") && s.length >= 9 && s.length <= 12) return `966${s}`;
+
+  // fallback: return as-is (still works for non-KSA numbers)
+  return s;
+}
 
 export default function Alerts() {
   const [loading, setLoading] = useState(true);
@@ -118,6 +173,8 @@ export default function Alerts() {
     } catch {}
   }
 
+  const waNumber = active ? toWhatsappNumber(active.phone) : "";
+
   return (
     <div>
       <div className="mb-3">
@@ -200,9 +257,19 @@ export default function Alerts() {
 
             <a
               className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white"
-              href={`https://wa.me/${String(active.phone).replace(/\D/g, "")}?text=${encodeURIComponent(
-                `Hello, I want to apply for ${active.jobRole} in ${active.city}.`
-              )}`}
+              href={
+                waNumber
+                  ? `https://wa.me/${waNumber}?text=${encodeURIComponent(
+                      `Hello, I want to apply for ${active.jobRole} in ${active.city}.`
+                    )}`
+                  : "#"
+              }
+              onClick={(e) => {
+                if (!waNumber) {
+                  e.preventDefault();
+                  alert("WhatsApp number not valid.");
+                }
+              }}
               target="_blank"
               rel="noreferrer"
             >
